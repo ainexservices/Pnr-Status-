@@ -1,825 +1,481 @@
 *{
+  box-sizing:border-box;
   margin:0;
   padding:0;
-  box-sizing:border-box;
-}
-
-:root{
-  --blue:#1877f2;
-  --blue2:#0d63d8;
-  --dark:#14213d;
-  --text:#26344d;
-  --muted:#748196;
-  --bg:#f3f8ff;
-  --white:#fff;
-  --green:#18a878;
-  --yellow:#e5aa00;
-  --red:#e94b55;
-}
-
-html{
-  scroll-behavior:smooth;
 }
 
 body{
-  font-family:"Poppins",sans-serif;
-  background:#fff;
-  color:var(--text);
-  overflow-x:hidden;
+  font-family:Arial,Helvetica,sans-serif;
+  background:#f5f8ff;
+  color:#14213d;
 }
 
-main{
+.app{
   width:100%;
+  min-height:100vh;
 }
 
-
-/* =========================
-   AINEX BRANDING
-========================= */
-
-.main-brand{
-  width:100%;
-  min-height:125px;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  gap:18px;
-  padding:20px;
+.brand{
+  height:86px;
   background:#fff;
-  border-bottom:1px solid #edf1f6;
-}
-
-.main-logo{
-  width:72px;
-  height:72px;
   display:flex;
-  justify-content:center;
   align-items:center;
-  border-radius:22px;
-  background:linear-gradient(135deg,#e7f2ff,#eee8ff);
-  font-size:39px;
-  box-shadow:0 12px 30px rgba(30,100,220,.12);
+  justify-content:center;
+  gap:14px;
+  border-bottom:1px solid #e7ebf2;
 }
 
-.main-brand h1{
-  color:var(--dark);
-  font-size:38px;
+.brand-icon{
+  width:58px;
+  height:58px;
+  border-radius:18px;
+  display:grid;
+  place-items:center;
+  background:#e8f1ff;
+  font-size:31px;
+}
+
+.brand h1{
+  font-size:30px;
+  line-height:1;
   font-weight:800;
-  line-height:1.1;
 }
 
-.main-brand h1 span{
-  color:var(--blue);
+.brand h1 b{
+  color:#1677ed;
 }
 
-.main-brand p{
-  margin-top:5px;
-  color:var(--muted);
+.brand p{
+  margin-top:6px;
+  color:#7a8799;
   font-size:13px;
-  font-weight:500;
 }
-
-
-/* =========================
-   HERO
-========================= */
 
 .hero{
-  width:100%;
-  padding:55px 20px 48px;
+  min-height:calc(100vh - 86px);
+  padding:58px 20px;
   text-align:center;
   background:
-    radial-gradient(circle at 8% 10%,#e2f0ff 0,transparent 34%),
-    radial-gradient(circle at 92% 15%,#f0e6ff 0,transparent 34%),
-    linear-gradient(135deg,#f3f9ff,#faf8ff);
+    radial-gradient(circle at 10% 10%,#dcecff,transparent 35%),
+    radial-gradient(circle at 90% 20%,#f0e4ff,transparent 35%),
+    linear-gradient(135deg,#f2f8ff,#faf7ff);
 }
 
 .tag{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  padding:10px 20px;
-  margin-bottom:20px;
-  border-radius:50px;
-  background:#e2f0ff;
-  color:#2175d6;
-  font-size:14px;
+  display:inline-block;
+  padding:12px 20px;
+  border-radius:30px;
+  background:#e4f1ff;
+  color:#2377cf;
   font-weight:700;
+  font-size:14px;
+  margin-bottom:25px;
 }
 
 .hero h2{
-  max-width:1050px;
-  margin:auto;
-  color:#13213c;
   font-size:52px;
-  line-height:1.13;
-  letter-spacing:-1.7px;
-  font-weight:800;
+  line-height:1.08;
+  max-width:900px;
+  margin:auto;
+  font-weight:850;
+  letter-spacing:-1.5px;
 }
 
 .hero h2 span{
-  color:var(--blue);
+  color:#1877ed;
 }
 
-.subtitle{
-  max-width:850px;
-  margin:15px auto 30px;
-  color:#6e7c90;
-  font-size:17px;
-  font-weight:500;
+.intro{
+  max-width:720px;
+  margin:18px auto 35px;
+  color:#68778c;
+  font-size:18px;
+  line-height:1.6;
 }
 
-
-/* =========================
-   PNR CARD
-========================= */
-
-.pnr-card{
-  width:min(760px,100%);
+.checker{
+  width:min(700px,100%);
   margin:auto;
+  background:#fff;
+  border:1px solid #e1e7ef;
+  border-radius:26px;
   padding:28px;
   text-align:left;
-  background:#fff;
-  border:1px solid #e2e8f0;
-  border-radius:26px;
-  box-shadow:0 18px 50px rgba(28,67,112,.12);
+  box-shadow:0 18px 50px rgba(30,70,130,.10);
 }
 
-.card-title{
+.checker-title{
   display:flex;
   align-items:center;
   gap:16px;
-  margin-bottom:23px;
+  margin-bottom:26px;
 }
 
-.card-icon{
-  width:60px;
-  height:60px;
-  flex:none;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+.ticket-icon{
+  width:64px;
+  height:64px;
+  display:grid;
+  place-items:center;
   border-radius:18px;
-  background:#e9f3ff;
-  font-size:29px;
+  background:#e9f2ff;
+  font-size:30px;
 }
 
-.card-title h3{
-  color:#17243c;
-  font-size:21px;
-  font-weight:800;
+.checker-title h3{
+  font-size:22px;
+  margin-bottom:5px;
 }
 
-.card-title p{
-  margin-top:2px;
-  color:#7c8798;
-  font-size:13px;
-  font-weight:500;
-}
-
-.pnr-card label{
-  display:block;
-  margin-bottom:8px;
-  color:#657287;
+.checker-title p{
+  color:#7d8999;
   font-size:14px;
-  font-weight:700;
 }
 
-.input-box{
-  width:100%;
-  padding:9px 17px 8px;
-  background:#fff;
-  border:2px solid #e1e6ec;
-  border-radius:18px;
-  transition:.2s;
-}
-
-.input-box:focus-within{
-  border-color:var(--blue);
-  box-shadow:0 0 0 4px rgba(24,119,242,.10);
-}
-
-.input-box small{
+label{
   display:block;
-  color:#9aa5b4;
-  font-size:11px;
-  font-weight:600;
+  font-weight:700;
+  margin-bottom:9px;
 }
 
-.input-box input{
+input{
   width:100%;
-  border:0;
-  outline:0;
-  background:transparent;
-  color:#29354a;
-  font-family:inherit;
+  height:72px;
+  border:2px solid #e0e5ec;
+  border-radius:18px;
+  padding:0 20px;
   font-size:22px;
   font-weight:700;
-}
-
-.input-box input::placeholder{
-  color:#858f9e;
-}
-
-#checkBtn{
-  width:100%;
-  height:57px;
-  margin-top:13px;
-  border:0;
-  border-radius:16px;
-  background:linear-gradient(135deg,#2781f7,#146be0);
-  color:#fff;
-  font-family:inherit;
-  font-size:17px;
-  font-weight:700;
-  cursor:pointer;
-  box-shadow:0 12px 25px rgba(24,119,242,.22);
+  outline:none;
+  color:#14213d;
   transition:.2s;
 }
 
-#checkBtn:hover{
-  transform:translateY(-2px);
+input:focus{
+  border-color:#247df0;
+  box-shadow:0 0 0 4px #e8f1ff;
 }
 
-#checkBtn:active{
-  transform:scale(.98);
+input::placeholder{
+  color:#9aa4b2;
 }
 
-#checkBtn:disabled{
-  opacity:.7;
-  cursor:not-allowed;
+button{
+  width:100%;
+  height:62px;
+  margin-top:16px;
+  border:0;
+  border-radius:17px;
+  background:linear-gradient(135deg,#1677ed,#2867e8);
+  color:#fff;
+  font-size:18px;
+  font-weight:800;
+  cursor:pointer;
+  box-shadow:0 12px 25px rgba(24,119,237,.22);
 }
 
+button:active{
+  transform:scale(.99);
+}
 
-/* =========================
-   LOADING
-========================= */
+button:disabled{
+  opacity:.65;
+  cursor:wait;
+}
+
+.secure{
+  text-align:center;
+  margin-top:18px;
+  color:#8a96a5;
+  font-size:13px;
+}
 
 .loading{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  gap:9px;
-  margin-top:13px;
-  color:var(--blue);
-  font-size:13px;
-  font-weight:600;
+  text-align:center;
+  padding:20px;
+  color:#2575dc;
+  font-weight:700;
 }
 
 .loading span{
-  width:16px;
-  height:16px;
-  border:3px solid #dceaff;
-  border-top-color:var(--blue);
+  display:inline-block;
+  width:18px;
+  height:18px;
+  border:3px solid #d9e8ff;
+  border-top-color:#1677ed;
   border-radius:50%;
   animation:spin .7s linear infinite;
+  vertical-align:middle;
+  margin-right:8px;
 }
 
 @keyframes spin{
-  to{
-    transform:rotate(360deg);
-  }
-}
-
-
-/* =========================
-   ERROR
-========================= */
-
-.error{
-  margin-top:13px;
-  padding:11px 14px;
-  border-radius:12px;
-  background:#fff0f1;
-  color:#d8444d;
-  font-size:13px;
-  font-weight:600;
+  to{transform:rotate(360deg)}
 }
 
 .hidden{
   display:none!important;
 }
 
-
-/* =========================
-   PRIVACY
-========================= */
-
-.privacy{
-  margin-top:14px;
-  text-align:center;
-  color:#8a96a6;
-  font-size:11px;
-  font-weight:600;
+.error{
+  margin-top:15px;
+  padding:14px 16px;
+  border-radius:12px;
+  background:#fff0f0;
+  color:#d83b3b;
+  font-weight:700;
+  font-size:14px;
 }
 
-
-/* =========================
-   STATUS KEY
-========================= */
-
-.status-key{
-  display:flex;
-  justify-content:center;
-  gap:48px;
-  margin:22px auto 0;
-}
-
-.status-key div{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-}
-
-.status-key b{
-  font-size:15px;
-}
-
-.status-key small{
-  margin-top:2px;
-  color:#758195;
-  font-size:11px;
-  font-weight:600;
-}
-
-.cnf{
-  color:var(--green);
-}
-
-.rac{
-  color:var(--yellow);
-}
-
-.wl{
-  color:var(--red);
-}
-
-
-/* =========================
-   RESULT
-========================= */
+/* RESULT */
 
 .result{
-  width:min(900px,calc(100% - 40px));
-  margin:30px auto 50px;
-  padding:28px;
+  margin-top:25px;
+  border:1px solid #dfe6ef;
+  border-radius:20px;
+  overflow:hidden;
   background:#fff;
-  border:1px solid #e2e8ef;
-  border-radius:25px;
-  box-shadow:0 18px 50px rgba(28,67,112,.11);
 }
 
 .result-head{
+  padding:20px;
   display:flex;
-  justify-content:space-between;
   align-items:center;
+  justify-content:space-between;
   gap:15px;
-  padding-bottom:20px;
-  border-bottom:1px solid #edf0f4;
+  background:linear-gradient(135deg,#eef6ff,#f8f1ff);
 }
 
-.result-head span{
-  color:var(--blue);
-  font-size:11px;
-  font-weight:800;
-  letter-spacing:2px;
+.result-head small{
+  color:#7b8797;
 }
 
-.result-head h2{
-  margin-top:3px;
-  color:#17243c;
-  font-size:25px;
+.result-head h3{
+  margin-top:5px;
+  font-size:22px;
 }
 
-.status-badge{
+.status{
   padding:9px 15px;
-  border-radius:50px;
-  background:#e7f8f1;
-  color:var(--green);
-  font-size:13px;
+  border-radius:30px;
   font-weight:800;
+  white-space:nowrap;
 }
 
-.status-badge.rac{
-  background:#fff7dc;
-  color:#c38e00;
+.confirmed{
+  background:#e6f8ed;
+  color:#14965a;
 }
 
-.status-badge.waiting{
-  background:#fff0f1;
-  color:#dc414c;
+.rac{
+  background:#fff5d9;
+  color:#c48700;
 }
 
+.waiting{
+  background:#ffe8e8;
+  color:#d93434;
+}
 
-/* =========================
-   JOURNEY
-========================= */
+.info-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:1px;
+  background:#e7ebf0;
+  border-top:1px solid #e7ebf0;
+}
+
+.info{
+  background:#fff;
+  padding:16px;
+}
+
+.info small{
+  display:block;
+  color:#8b96a5;
+  font-size:11px;
+  font-weight:700;
+  margin-bottom:6px;
+}
+
+.info strong{
+  font-size:15px;
+  word-break:break-word;
+}
 
 .journey{
-  display:grid;
-  grid-template-columns:1fr 70px 1fr;
+  display:flex;
   align-items:center;
-  gap:12px;
-  margin:22px 0;
+  justify-content:space-between;
   padding:20px;
-  border-radius:18px;
-  background:#f5f9ff;
+  gap:12px;
 }
 
-.station small{
-  display:block;
-  margin-bottom:3px;
-  color:#8995a5;
-  font-size:10px;
-  font-weight:700;
-}
-
-.station strong{
-  color:#1d2b44;
-  font-size:18px;
+.station{
+  flex:1;
 }
 
 .station.right{
   text-align:right;
 }
 
-.journey-line{
-  width:42px;
-  height:42px;
-  margin:auto;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-radius:50%;
-  background:#e4efff;
-  font-size:19px;
-}
-
-
-/* =========================
-   INFO
-========================= */
-
-.info-grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:10px;
-}
-
-.info{
-  padding:14px;
-  border-radius:14px;
-  background:#f8fafc;
-  border:1px solid #edf0f4;
-}
-
-.info small{
+.station small{
   display:block;
-  margin-bottom:3px;
-  color:#8995a5;
-  font-size:9px;
-  font-weight:700;
+  color:#8b96a5;
+  font-size:11px;
+  margin-bottom:6px;
 }
 
-.info strong{
-  display:block;
-  color:#29364d;
-  font-size:13px;
+.station strong{
+  font-size:16px;
 }
 
-
-/* =========================
-   PASSENGERS
-========================= */
-
-.passenger-section{
-  margin-top:23px;
+.arrow{
+  color:#2378e8;
+  font-size:24px;
 }
 
-.section-title{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:10px;
+.passengers{
+  padding:20px;
+  border-top:1px solid #e7ebf0;
 }
 
-.section-title h3{
-  color:#1c2a43;
-  font-size:18px;
-}
-
-.section-title span{
-  color:#7e8a9b;
-  font-size:12px;
-  font-weight:600;
+.passengers h4{
+  margin-bottom:12px;
 }
 
 .passenger{
+  padding:14px;
+  border:1px solid #e4e8ee;
+  border-radius:13px;
+  margin-top:10px;
   display:flex;
   justify-content:space-between;
-  gap:15px;
-  margin-top:8px;
-  padding:14px;
-  border:1px solid #e8edf2;
-  border-radius:14px;
-  background:#fff;
+  gap:12px;
 }
 
-.passenger strong{
-  color:#26344b;
-  font-size:13px;
+.passenger div:first-child{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
 }
 
-.passenger span{
-  display:block;
-  margin-top:3px;
-  color:#788598;
-  font-size:11px;
+.passenger small{
+  color:#7c8797;
 }
 
 .passenger-status{
+  font-weight:800;
   align-self:center;
-  color:#64748b;
-  font-size:11px;
-  font-weight:700;
+  white-space:nowrap;
 }
 
-.passenger-status.confirmed{
-  color:var(--green);
-}
+@media(max-width:700px){
 
-.passenger-status.rac{
-  color:var(--yellow);
-}
-
-.passenger-status.waiting{
-  color:var(--red);
-}
-
-
-/* =========================
-   FOOTER
-========================= */
-
-footer{
-  padding:28px 20px;
-  text-align:center;
-  background:#14213d;
-  color:#fff;
-}
-
-.footer-logo{
-  font-size:20px;
-}
-
-footer p{
-  margin-top:5px;
-  color:#abb8cb;
-  font-size:12px;
-}
-
-footer small{
-  color:#7f8ca2;
-  font-size:10px;
-}
-
-
-/* =========================
-   DESKTOP
-========================= */
-
-@media(min-width:1000px){
-
-  .main-brand{
-    min-height:110px;
+  .brand{
+    height:76px;
+    justify-content:flex-start;
+    padding:0 18px;
   }
 
-  .hero{
-    padding-top:58px;
-  }
-
-  .hero h2{
-    font-size:50px;
-  }
-
-}
-
-
-/* =========================
-   TABLET
-========================= */
-
-@media(max-width:850px){
-
-  .hero h2{
-    font-size:42px;
-  }
-
-  .info-grid{
-    grid-template-columns:repeat(2,1fr);
-  }
-
-}
-
-
-/* =========================
-   MOBILE
-========================= */
-
-@media(max-width:600px){
-
-  .main-brand{
-    min-height:95px;
-    justify-content:center;
-    padding:14px 15px;
-    gap:12px;
-  }
-
-  .main-logo{
-    width:55px;
-    height:55px;
-    border-radius:17px;
-    font-size:29px;
-  }
-
-  .main-brand h1{
+  .brand-icon{
+    width:48px;
+    height:48px;
     font-size:25px;
-  }
-
-  .main-brand p{
-    font-size:10px;
-  }
-
-
-  .hero{
-    padding:38px 15px 35px;
-  }
-
-  .tag{
-    padding:8px 14px;
-    margin-bottom:18px;
-    font-size:11px;
-  }
-
-  .hero h2{
-    font-size:32px;
-    line-height:1.15;
-    letter-spacing:-1px;
-  }
-
-  .subtitle{
-    margin:12px auto 22px;
-    font-size:13px;
-    line-height:1.55;
-  }
-
-
-  .pnr-card{
-    padding:20px 14px;
-    border-radius:22px;
-  }
-
-  .card-title{
-    gap:11px;
-    margin-bottom:19px;
-  }
-
-  .card-icon{
-    width:52px;
-    height:52px;
-    border-radius:16px;
-    font-size:24px;
-  }
-
-  .card-title h3{
-    font-size:17px;
-  }
-
-  .card-title p{
-    font-size:10px;
-  }
-
-  .pnr-card label{
-    font-size:12px;
-  }
-
-  .input-box{
-    padding:8px 13px;
     border-radius:15px;
   }
 
-  .input-box input{
-    font-size:20px;
+  .brand h1{
+    font-size:23px;
   }
 
-  #checkBtn{
-    height:54px;
-    border-radius:14px;
-    font-size:15px;
-  }
-
-
-  .status-key{
-    gap:27px;
-    margin-top:20px;
-  }
-
-  .status-key b{
-    font-size:13px;
-  }
-
-  .status-key small{
-    font-size:9px;
-  }
-
-
-  .result{
-    width:calc(100% - 24px);
-    margin:22px auto 35px;
-    padding:18px 13px;
-    border-radius:21px;
-  }
-
-  .result-head h2{
-    font-size:20px;
-  }
-
-  .status-badge{
-    padding:7px 10px;
-    font-size:10px;
-  }
-
-
-  .journey{
-    grid-template-columns:1fr 45px 1fr;
-    gap:5px;
-    padding:15px 10px;
-  }
-
-  .station strong{
-    font-size:13px;
-  }
-
-  .journey-line{
-    width:36px;
-    height:36px;
-    font-size:16px;
-  }
-
-
-  .info-grid{
-    grid-template-columns:repeat(2,1fr);
-    gap:7px;
-  }
-
-  .info{
-    padding:11px;
-  }
-
-  .info strong{
+  .brand p{
     font-size:11px;
   }
 
-
-  .passenger{
-    padding:12px;
+  .hero{
+    min-height:calc(100vh - 76px);
+    padding:35px 15px 25px;
   }
 
-  .passenger strong{
+  .tag{
     font-size:12px;
-  }
-
-  .passenger span{
-    font-size:10px;
-  }
-
-  footer{
-    padding:25px 15px;
-  }
-
-  .footer-logo{
-    font-size:17px;
-  }
-
-}
-
-
-/* =========================
-   SMALL MOBILE
-========================= */
-
-@media(max-width:380px){
-
-  .main-brand h1{
-    font-size:22px;
+    padding:10px 15px;
+    margin-bottom:18px;
   }
 
   .hero h2{
-    font-size:28px;
+    font-size:34px;
+    letter-spacing:-.8px;
   }
 
-  .status-key{
-    gap:18px;
+  .intro{
+    font-size:15px;
+    line-height:1.45;
+    margin:13px auto 25px;
   }
 
+  .checker{
+    padding:20px;
+    border-radius:22px;
+  }
+
+  .checker-title{
+    margin-bottom:20px;
+  }
+
+  .ticket-icon{
+    width:54px;
+    height:54px;
+    font-size:25px;
+  }
+
+  .checker-title h3{
+    font-size:19px;
+  }
+
+  input{
+    height:64px;
+    font-size:19px;
+  }
+
+  button{
+    height:58px;
+    font-size:17px;
+  }
+
+  .result-head{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .info-grid{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .journey{
+    padding:16px;
+  }
+
+  .station strong{
+    font-size:14px;
+  }
+
+  .passenger{
+    flex-direction:column;
+  }
+
+  .passenger-status{
+    align-self:flex-start;
+  }
+}
+
+@media(min-width:1100px){
+
+  .checker{
+    width:760px;
+  }
+
+  .hero{
+    padding-top:70px;
+  }
 }
