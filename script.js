@@ -1,115 +1,357 @@
 document.addEventListener("DOMContentLoaded", () => {
 
-  const form = document.getElementById("pnrForm");
-  const input = document.getElementById("pnr");
-  const button = document.getElementById("checkBtn");
-  const result = document.getElementById("result");
+  const $ = id => document.getElementById(id);
 
-  if (!form || !input || !button || !result) {
-    console.error("AINEX: PNR elements missing");
-    return;
+  /* =========================
+     PNR STATUS
+  ========================= */
+
+  const pnrForm = $("pnrForm");
+  const pnrInput = $("pnr");
+  const checkBtn = $("checkBtn");
+  const result = $("result");
+
+  if (pnrForm) {
+
+    pnrForm.addEventListener("submit", async e => {
+
+      e.preventDefault();
+
+      const pnr = pnrInput.value.replace(/\D/g, "");
+
+      if (!/^\d{10}$/.test(pnr)) {
+        result.innerHTML =
+          errorHTML("Please enter a valid 10-digit PNR number.");
+        return;
+      }
+
+      loading(result, "Checking PNR Status...");
+
+      checkBtn.disabled = true;
+      checkBtn.textContent = "⏳ Checking...";
+
+      try {
+
+        const data = await api(
+          `/api/pnr?pnr=${encodeURIComponent(pnr)}`
+        );
+
+        renderPNR(data.data || data);
+
+      } catch (err) {
+
+        result.innerHTML = errorHTML(err.message);
+
+      } finally {
+
+        checkBtn.disabled = false;
+        checkBtn.textContent = "🔎 CHECK STATUS";
+
+      }
+
+    });
+
+    pnrInput.addEventListener("input", () => {
+      pnrInput.value =
+        pnrInput.value.replace(/\D/g, "").slice(0, 10);
+    });
+
   }
 
-  form.addEventListener("submit", checkPNR);
 
-  input.addEventListener("input", () => {
-    input.value = input.value
-      .replace(/\D/g, "")
-      .slice(0, 10);
-  });
+  /* =========================
+     LIVE TRAIN
+  ========================= */
 
-  async function checkPNR(event) {
+  $("liveBtn")?.addEventListener("click", async () => {
 
-    event.preventDefault();
+    const train = $("liveTrain").value.trim();
+    const date = $("liveDate").value;
+    const box = $("liveResult");
 
-    const pnr = input.value.trim();
-
-    if (!/^\d{10}$/.test(pnr)) {
-      showError("Please enter a valid 10-digit PNR number.");
+    if (!/^\d{5}$/.test(train)) {
+      box.innerHTML =
+        errorHTML("Enter a valid 5-digit train number.");
       return;
     }
 
-    button.disabled = true;
-    button.textContent = "⏳ Checking...";
-
-    result.innerHTML = `
-      <div class="loading">
-        <div class="loader"></div>
-        <strong>Checking PNR Status...</strong>
-        <span>Please wait while we fetch the latest details.</span>
-      </div>
-    `;
+    loading(box, "Fetching live train status...");
 
     try {
 
-      const response = await fetch(
-        `/api/pnr?pnr=${encodeURIComponent(pnr)}`,
-        {
-          method: "GET",
-          headers: {
-            "Accept": "application/json"
-          },
-          cache: "no-store"
-        }
+      const data = await api(
+        `/api/rail?action=live&train=${encodeURIComponent(train)}&date=${encodeURIComponent(date)}`
       );
 
-      const raw = await response.text();
+      renderLive(box, data.data || data);
 
-      let api;
+    } catch (err) {
 
-      try {
-        api = JSON.parse(raw);
-      } catch {
-        throw new Error(
-          "Invalid response received from server."
-        );
-      }
-
-      console.log("AINEX RailKit Response:", api);
-
-      if (!response.ok || api?.success === false) {
-        throw new Error(
-          api?.message ||
-          api?.error ||
-          "PNR status could not be fetched."
-        );
-      }
-
-      const data = api?.data || api;
-
-      renderResult(data);
-
-    } catch (error) {
-
-      console.error("AINEX PNR Error:", error);
-
-      showError(
-        error?.message ||
-        "Unable to check PNR status."
-      );
-
-    } finally {
-
-      button.disabled = false;
-      button.textContent = "🔎 Check Status";
+      box.innerHTML = errorHTML(err.message);
 
     }
+
+  });
+
+
+  /* =========================
+     SEAT AVAILABILITY
+  ========================= */
+
+  $("seatBtn")?.addEventListener("click", async () => {
+
+    const train = $("seatTrain").value.trim();
+    const from = $("seatFrom").value.trim().toUpperCase();
+    const to = $("seatTo").value.trim().toUpperCase();
+    const date = $("seatDate").value;
+    const coach = $("seatClass").value;
+    const quota = $("seatQuota").value;
+    const box = $("seatResult");
+
+    if (
+      !/^\d{5}$/.test(train) ||
+      !from ||
+      !to ||
+      !date
+    ) {
+      box.innerHTML =
+        errorHTML("Train, From, To and Date are required.");
+      return;
+    }
+
+    loading(box, "Checking seat availability...");
+
+    try {
+
+      const params = new URLSearchParams({
+        action: "availability",
+        train,
+        from,
+        to,
+        date,
+        coach,
+        quota
+      });
+
+      const data = await api(
+        `/api/rail?${params.toString()}`
+      );
+
+      renderGeneric(box, data.data || data, "Seat Availability");
+
+    } catch (err) {
+
+      box.innerHTML = errorHTML(err.message);
+
+    }
+
+  });
+
+
+  /* =========================
+     FARE
+  ========================= */
+
+  $("fareBtn")?.addEventListener("click", async () => {
+
+    const train = $("fareTrain").value.trim();
+    const from = $("fareFrom").value.trim().toUpperCase();
+    const to = $("fareTo").value.trim().toUpperCase();
+    const date = $("fareDate").value;
+    const coach = $("fareClass").value;
+    const quota = $("fareQuota").value;
+    const box = $("fareResult");
+
+    if (
+      !/^\d{5}$/.test(train) ||
+      !from ||
+      !to ||
+      !date
+    ) {
+      box.innerHTML =
+        errorHTML("Train, From, To and Date are required.");
+      return;
+    }
+
+    loading(box, "Checking fare...");
+
+    try {
+
+      const params = new URLSearchParams({
+        action: "fare",
+        train,
+        from,
+        to,
+        date,
+        coach,
+        quota
+      });
+
+      const data = await api(
+        `/api/rail?${params.toString()}`
+      );
+
+      renderGeneric(box, data.data || data, "Fare Details");
+
+    } catch (err) {
+
+      box.innerHTML = errorHTML(err.message);
+
+    }
+
+  });
+
+
+  /* =========================
+     LIVE STATION
+  ========================= */
+
+  $("stationBtn")?.addEventListener("click", async () => {
+
+    const station =
+      $("stationCode").value.trim().toUpperCase();
+
+    const box = $("stationResult");
+
+    if (!/^[A-Z]{2,5}$/.test(station)) {
+      box.innerHTML =
+        errorHTML("Enter a valid station code.");
+      return;
+    }
+
+    loading(box, "Fetching station information...");
+
+    try {
+
+      const params = new URLSearchParams({
+        action: "station",
+        station
+      });
+
+      const data = await api(
+        `/api/rail?${params.toString()}`
+      );
+
+      renderGeneric(
+        box,
+        data.data || data,
+        "Live Station"
+      );
+
+    } catch (err) {
+
+      box.innerHTML = errorHTML(err.message);
+
+    }
+
+  });
+
+
+  /* =========================
+     TRAIN BETWEEN STATIONS
+  ========================= */
+
+  $("searchBtn")?.addEventListener("click", async () => {
+
+    const from =
+      $("searchFrom").value.trim().toUpperCase();
+
+    const to =
+      $("searchTo").value.trim().toUpperCase();
+
+    const box = $("searchResult");
+
+    if (!from || !to) {
+      box.innerHTML =
+        errorHTML("From and To station codes are required.");
+      return;
+    }
+
+    loading(box, "Searching trains...");
+
+    try {
+
+      const params = new URLSearchParams({
+        action: "search",
+        from,
+        to
+      });
+
+      const data = await api(
+        `/api/rail?${params.toString()}`
+      );
+
+      renderGeneric(
+        box,
+        data.data || data,
+        "Available Trains"
+      );
+
+    } catch (err) {
+
+      box.innerHTML = errorHTML(err.message);
+
+    }
+
+  });
+
+
+  /* =========================
+     API HELPER
+  ========================= */
+
+  async function api(url) {
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Accept": "application/json"
+      },
+      cache: "no-store"
+    });
+
+    const text = await response.text();
+
+    let data;
+
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new Error(
+        "Server returned an invalid response."
+      );
+    }
+
+    if (!response.ok || data?.success === false) {
+
+      throw new Error(
+        data?.message ||
+        data?.error ||
+        "Railway service request failed."
+      );
+
+    }
+
+    return data;
   }
 
 
-  function renderResult(data) {
+  /* =========================
+     PNR RESULT
+  ========================= */
 
-    const train = data?.train || {};
-    const journey = data?.journey || {};
+  function renderPNR(d) {
+
+    const train = d?.train || {};
+    const journey = d?.journey || {};
     const source = journey?.source || {};
     const destination = journey?.destination || {};
-    const booking = data?.booking || {};
+    const booking = d?.booking || {};
 
-    const passengers = Array.isArray(data?.passengers)
-      ? data.passengers
-      : [];
-
-    const status = getOverallStatus(passengers);
+    const passengers =
+      Array.isArray(d?.passengers)
+        ? d.passengers
+        : [];
 
     result.innerHTML = `
 
@@ -117,23 +359,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
         <div class="result-head">
 
-          <div>
+          <small>PNR RESULT</small>
 
-            <small>PNR RESULT</small>
+          <h2>
+            PNR ${safe(d?.pnr)}
+          </h2>
 
-            <h2>
-              PNR ${safe(data?.pnr)}
-            </h2>
-
-            <p>
-              ${safe(status.label)}
-            </p>
-
-          </div>
-
-          <div class="status-badge ${status.class}">
-            ${safe(status.code)}
-          </div>
+          <p>
+            ${safe(getPNRStatus(passengers))}
+          </p>
 
         </div>
 
@@ -141,29 +375,15 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="route">
 
           <div>
-
             <small>FROM</small>
-
-            <b>
-              ${station(source)}
-            </b>
-
+            <b>${station(source)}</b>
           </div>
 
-
-          <div class="arrow">
-            →
-          </div>
-
+          <div class="arrow">→</div>
 
           <div class="right">
-
             <small>TO</small>
-
-            <b>
-              ${station(destination)}
-            </b>
-
+            <b>${station(destination)}</b>
           </div>
 
         </div>
@@ -172,75 +392,43 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="info-grid">
 
           <div>
-
             <small>TRAIN</small>
-
-            <b>
-              ${safe(train?.name)}
-            </b>
-
+            <b>${safe(train?.name)}</b>
           </div>
 
-
           <div>
-
             <small>TRAIN NUMBER</small>
-
-            <b>
-              ${safe(train?.number)}
-            </b>
-
+            <b>${safe(train?.number)}</b>
           </div>
 
-
           <div>
-
             <small>JOURNEY DATE</small>
-
-            <b>
-              ${safe(
-                journey?.dateOfJourney ||
-                journey?.date ||
-                data?.journeyDate
-              )}
-            </b>
-
+            <b>${safe(
+              journey?.dateOfJourney ||
+              journey?.date
+            )}</b>
           </div>
 
-
           <div>
-
             <small>CLASS</small>
-
-            <b>
-              ${displayValue(journey?.class)}
-            </b>
-
+            <b>${display(
+              journey?.class
+            )}</b>
           </div>
 
-
           <div>
-
             <small>QUOTA</small>
-
-            <b>
-              ${displayValue(journey?.quota)}
-            </b>
-
+            <b>${display(
+              journey?.quota
+            )}</b>
           </div>
 
-
           <div>
-
             <small>FARE</small>
-
-            <b>
-              ₹${displayValue(
-                booking?.fare ||
-                data?.fare
-              )}
-            </b>
-
+            <b>₹${display(
+              booking?.fare ||
+              d?.fare
+            )}</b>
           </div>
 
         </div>
@@ -256,15 +444,11 @@ document.addEventListener("DOMContentLoaded", () => {
           ${
             passengers.length
               ? passengers
-                  .map((passenger, index) =>
-                    passengerHTML(passenger, index)
-                  )
+                  .map(passengerHTML)
                   .join("")
               : `
                 <div class="passenger">
-                  <div>
-                    <b>Passenger details unavailable</b>
-                  </div>
+                  Passenger details unavailable.
                 </div>
               `
           }
@@ -273,74 +457,36 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
         <div class="privacy">
+          🔒 PNR status fetched successfully.
         </div>
 
       </div>
     `;
-
-    result.scrollIntoView({
-      behavior: "smooth",
-      block: "nearest"
-    });
   }
 
 
-  function passengerHTML(passenger, index) {
+  function passengerHTML(p, index) {
 
-    const booking =
-      passenger?.booking || {};
-
-    const current =
-      passenger?.current || {};
-
-    const name =
-      passenger?.name ||
-      passenger?.passengerName ||
-      `Passenger ${index + 1}`;
+    const booking = p?.booking || {};
+    const current = p?.current || {};
 
     const bookingStatus =
-      displayValue(
+      display(
         booking?.details ||
         booking?.status ||
         booking
       );
 
     const currentStatus =
-      displayValue(
+      display(
         current?.details ||
         current?.status ||
         current
       );
 
-    const coach =
-      displayValue(
-        current?.coach ||
-        current?.coachNumber ||
-        booking?.coach ||
-        booking?.coachNumber
-      );
-
-    const berth =
-      displayValue(
-        current?.berthNo ||
-        current?.berthNumber ||
-        current?.berth ||
-        booking?.berthNo ||
-        booking?.berth
-      );
-
-    const berthCode =
-      displayValue(
-        current?.berthCode ||
-        current?.seat ||
-        booking?.berthCode
-      );
-
-    const statusCode =
+    const code =
       getStatusCode(
-        currentStatus !== "-"
-          ? currentStatus
-          : bookingStatus
+        currentStatus + " " + bookingStatus
       );
 
     return `
@@ -350,11 +496,11 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="passenger-top">
 
           <b>
-            ${safe(name)}
+            Passenger ${index + 1}
           </b>
 
-          <span class="${statusClass(statusCode)}">
-            ${safe(statusCode || "STATUS")}
+          <span class="${statusClass(code)}">
+            ${safe(code || "STATUS")}
           </span>
 
         </div>
@@ -363,51 +509,31 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="passenger-info">
 
           <div>
-
             <small>BOOKING STATUS</small>
-
-            <b>
-              ${safe(bookingStatus)}
-            </b>
-
+            <b>${safe(bookingStatus)}</b>
           </div>
 
-
           <div>
-
             <small>CURRENT STATUS</small>
-
-            <b>
-              ${safe(currentStatus)}
-            </b>
-
+            <b>${safe(currentStatus)}</b>
           </div>
 
-
           <div>
-
             <small>COACH</small>
-
-            <b>
-              ${safe(coach)}
-            </b>
-
+            <b>${display(
+              current?.coach ||
+              current?.coachNumber ||
+              booking?.coach
+            )}</b>
           </div>
 
-
           <div>
-
             <small>BERTH / SEAT</small>
-
-            <b>
-              ${safe(berth)}
-              ${
-                berthCode !== "-"
-                  ? ` (${safe(berthCode)})`
-                  : ""
-              }
-            </b>
-
+            <b>${display(
+              current?.berthNo ||
+              current?.berth ||
+              booking?.berthNo
+            )}</b>
           </div>
 
         </div>
@@ -417,23 +543,139 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 
-  function station(value) {
+  /* =========================
+     LIVE TRAIN RESULT
+  ========================= */
 
-    if (!value) return "-";
+  function renderLive(box, d) {
 
-    if (typeof value === "string") {
-      return safe(value);
+    const train = d?.train || d || {};
+
+    box.innerHTML = `
+      <div class="service-result-card">
+
+        <strong>
+          🚆 ${display(train?.name || d?.trainName)}
+        </strong>
+
+        <p>
+          Train Number:
+          ${display(train?.number || d?.trainNumber)}
+        </p>
+
+        <p>
+          Current Location:
+          ${display(
+            d?.currentStation ||
+            d?.currentLocation ||
+            d?.location
+          )}
+        </p>
+
+        <p>
+          Delay:
+          ${display(
+            d?.delay ||
+            d?.delayMinutes
+          )}
+        </p>
+
+      </div>
+    `;
+  }
+
+
+  /* =========================
+     GENERIC RESULT
+  ========================= */
+
+  function renderGeneric(box, data, title) {
+
+    const html =
+      formatObject(data);
+
+    box.innerHTML = `
+      <div class="service-result-card">
+
+        <strong>
+          ${safe(title)}
+        </strong>
+
+        ${html}
+
+      </div>
+    `;
+  }
+
+
+  function formatObject(data) {
+
+    if (
+      data === null ||
+      data === undefined
+    ) {
+      return "<p>No data available.</p>";
+    }
+
+    if (
+      typeof data === "string" ||
+      typeof data === "number"
+    ) {
+      return `<p>${safe(data)}</p>`;
+    }
+
+    if (Array.isArray(data)) {
+
+      return data
+        .slice(0, 20)
+        .map(item =>
+          `<p>• ${safe(display(item))}</p>`
+        )
+        .join("");
+    }
+
+    if (typeof data === "object") {
+
+      return Object.entries(data)
+        .slice(0, 30)
+        .map(([key, value]) => {
+
+          return `
+            <p>
+              <b>${safe(formatKey(key))}:</b>
+              ${safe(display(value))}
+            </p>
+          `;
+
+        })
+        .join("");
+    }
+
+    return "<p>No data available.</p>";
+  }
+
+
+  /* =========================
+     HELPERS
+  ========================= */
+
+  function station(obj) {
+
+    if (!obj) return "-";
+
+    if (typeof obj === "string") {
+      return safe(obj);
     }
 
     const name =
-      value?.name ||
-      value?.stationName ||
-      value?.station?.name;
+      obj?.name ||
+      obj?.stationName ||
+      obj?.station?.name;
 
     const code =
-      value?.code ||
-      value?.stationCode ||
-      value?.station?.code;
+      obj?.code ||
+      obj?.stationCode ||
+      obj?.station?.code;
 
     if (name) {
 
@@ -444,75 +686,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     }
 
-    return displayValue(value);
+    return display(obj);
   }
 
 
-  function displayValue(value) {
-
-    if (
-      value === null ||
-      value === undefined ||
-      value === ""
-    ) {
-      return "-";
-    }
-
-    if (
-      typeof value === "string" ||
-      typeof value === "number"
-    ) {
-      return safe(value);
-    }
-
-    if (Array.isArray(value)) {
-
-      const values = value
-        .map(item => plainValue(item))
-        .filter(item => item !== "-");
-
-      return safe(values.join(", ") || "-");
-    }
-
-    if (typeof value === "object") {
-
-      const keys = [
-        "details",
-        "name",
-        "status",
-        "value",
-        "text",
-        "label",
-        "code",
-        "number",
-        "description"
-      ];
-
-      for (const key of keys) {
-
-        if (
-          value[key] !== undefined &&
-          value[key] !== null &&
-          value[key] !== ""
-        ) {
-
-          const result =
-            plainValue(value[key]);
-
-          if (result !== "-") {
-            return safe(result);
-          }
-        }
-      }
-
-      return "-";
-    }
-
-    return "-";
-  }
-
-
-  function plainValue(value) {
+  function display(value) {
 
     if (
       value === null ||
@@ -532,8 +710,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (Array.isArray(value)) {
 
       return value
-        .map(item => plainValue(item))
-        .filter(item => item !== "-")
+        .map(display)
+        .filter(v => v !== "-")
         .join(", ") || "-";
     }
 
@@ -559,13 +737,14 @@ document.addEventListener("DOMContentLoaded", () => {
           value[key] !== ""
         ) {
 
-          const output =
-            plainValue(value[key]);
+          const v = display(value[key]);
 
-          if (output !== "-") {
-            return output;
+          if (v !== "-") {
+            return v;
           }
+
         }
+
       }
 
       return "-";
@@ -575,24 +754,49 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 
-  function getStatusCode(value) {
+  function getPNRStatus(passengers) {
 
-    const status =
-      String(value || "").toUpperCase();
+    const values =
+      passengers.map(p =>
+        display(
+          p?.current?.details ||
+          p?.current?.status ||
+          p?.current ||
+          p?.booking
+        ).toUpperCase()
+      );
 
-    if (status.includes("CNF"))
-      return "CNF";
+    if (values.some(v => v.includes("CNF")))
+      return "Confirmed";
 
-    if (status.includes("RAC"))
+    if (values.some(v => v.includes("RAC")))
       return "RAC";
 
-    if (status.includes("WL"))
+    if (values.some(v => v.includes("WL")))
+      return "Waiting List";
+
+    if (values.some(v => v.includes("CAN")))
+      return "Cancelled";
+
+    return "Status Available";
+  }
+
+
+  function getStatusCode(value) {
+
+    const s =
+      String(value || "").toUpperCase();
+
+    if (s.includes("CNF"))
+      return "CNF";
+
+    if (s.includes("RAC"))
+      return "RAC";
+
+    if (s.includes("WL"))
       return "WL";
 
-    if (
-      status.includes("CAN") ||
-      status.includes("CANCEL")
-    )
+    if (s.includes("CAN"))
       return "CAN";
 
     return "";
@@ -617,109 +821,32 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 
-  function getOverallStatus(passengers) {
+  function loading(box, message) {
 
-    if (!passengers.length) {
-
-      return {
-        code: "—",
-        label: "Status Available",
-        class: "unknown"
-      };
-
-    }
-
-    const statuses =
-      passengers.map(passenger => {
-
-        const current =
-          plainValue(
-            passenger?.current?.details ||
-            passenger?.current?.status ||
-            passenger?.current
-          );
-
-        const booking =
-          plainValue(
-            passenger?.booking?.details ||
-            passenger?.booking?.status ||
-            passenger?.booking
-          );
-
-        return getStatusCode(
-          `${current} ${booking}`
-        );
-
-      });
-
-
-    if (statuses.every(s => s === "CNF")) {
-
-      return {
-        code: "CNF",
-        label: "Confirmed",
-        class: "confirmed"
-      };
-
-    }
-
-
-    if (statuses.includes("RAC")) {
-
-      return {
-        code: "RAC",
-        label: "RAC Status",
-        class: "rac"
-      };
-
-    }
-
-
-    if (statuses.includes("WL")) {
-
-      return {
-        code: "WL",
-        label: "Waiting List",
-        class: "waiting"
-      };
-
-    }
-
-
-    if (statuses.includes("CAN")) {
-
-      return {
-        code: "CAN",
-        label: "Cancelled",
-        class: "cancelled"
-      };
-
-    }
-
-
-    return {
-      code: "—",
-      label: "Status Available",
-      class: "unknown"
-    };
+    box.innerHTML = `
+      <div class="service-loading">
+        ⏳ ${safe(message)}
+      </div>
+    `;
   }
 
 
-  function showError(message) {
+  function errorHTML(message) {
 
-    result.innerHTML = `
-      <div class="error-box">
-
-        <strong>
-          Unable to fetch PNR
-        </strong>
-
-        <p>
-          ${safe(message)}
-        </p>
-
+    return `
+      <div class="service-error">
+        ❌ ${safe(message)}
       </div>
     `;
+  }
+
+
+  function formatKey(key) {
+
+    return String(key)
+      .replace(/([A-Z])/g, " $1")
+      .replace(/[_-]/g, " ")
+      .replace(/^./, s => s.toUpperCase());
   }
 
 
