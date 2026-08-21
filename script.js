@@ -3,25 +3,16 @@ const button = document.getElementById("checkBtn");
 const errorBox = document.getElementById("error");
 const resultBox = document.getElementById("resultBox");
 
-
-// PNR input - only numbers
 input.addEventListener("input", () => {
   input.value = input.value.replace(/\D/g, "").slice(0, 10);
   errorBox.textContent = "";
 });
 
-
-// Enter key
-input.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    checkPNR();
-  }
+input.addEventListener("keydown", e => {
+  if (e.key === "Enter") checkPNR();
 });
 
-
-// Check button
 button.addEventListener("click", checkPNR);
-
 
 async function checkPNR() {
 
@@ -36,88 +27,62 @@ async function checkPNR() {
     return;
   }
 
-
   button.disabled = true;
-  button.innerHTML = "⏳ Checking...";
-
+  button.textContent = "⏳ Checking...";
 
   resultBox.innerHTML = `
     <div class="loading-card">
       <div class="loading-spinner"></div>
       <strong>Checking PNR Status</strong>
-      <span>Please wait while we fetch the latest information...</span>
+      <span>Please wait...</span>
     </div>
   `;
-
 
   try {
 
     const response = await fetch(
       `/api/pnr?pnr=${encodeURIComponent(pnr)}`,
       {
-        method: "GET",
         headers: {
-          "Accept": "application/json"
+          Accept: "application/json"
         }
       }
     );
 
+    const type = response.headers.get("content-type") || "";
 
-    const contentType =
-      response.headers.get("content-type") || "";
-
-
-    let result;
-
-
-    if (contentType.includes("application/json")) {
-
-      result = await response.json();
-
-    } else {
-
+    if (!type.includes("application/json")) {
       const text = await response.text();
-
-      throw new Error(
-        text || "Server returned an invalid response."
-      );
-
+      throw new Error(text || "Server returned an invalid response.");
     }
 
+    const result = await response.json();
 
     if (!response.ok || result?.success === false) {
-
       throw new Error(
         result?.message ||
         result?.error ||
         "Unable to fetch PNR status."
       );
-
     }
 
-
-    const data = result?.data || result;
-
-    showResult(data, pnr);
-
+    showResult(result?.data || result, pnr);
 
   } catch (error) {
 
-    console.error("PNR Error:", error);
+    console.error(error);
 
     resultBox.innerHTML = "";
 
     errorBox.textContent =
-      error.message ||
-      "Unable to fetch PNR status. Please try again.";
+      error.message || "Unable to fetch PNR status.";
 
   } finally {
 
     button.disabled = false;
-    button.innerHTML = `Check Status <span>→</span>`;
+    button.textContent = "🔍 Check Status";
 
   }
-
 }
 
 
@@ -131,13 +96,11 @@ function showResult(data, pnr) {
       ? data.passengers
       : [];
 
-
   const source =
     journey?.source?.name ||
     journey?.source?.code ||
     data?.source ||
     "-";
-
 
   const destination =
     journey?.destination?.name ||
@@ -145,36 +108,30 @@ function showResult(data, pnr) {
     data?.destination ||
     "-";
 
-
   const trainNumber =
     train?.number ||
     data?.trainNumber ||
     "-";
-
 
   const trainName =
     train?.name ||
     data?.trainName ||
     "Train";
 
-
   const journeyDate =
     journey?.date ||
     data?.journeyDate ||
     "-";
-
 
   const travelClass =
     journey?.class ||
     data?.class ||
     "-";
 
-
   const chartStatus =
     data?.chartStatus ||
     data?.chart_status ||
     "-";
-
 
   const status =
     data?.status ||
@@ -182,48 +139,45 @@ function showResult(data, pnr) {
     "AVAILABLE";
 
 
+  const statusClass = getStatusClass(status);
+
+
   const passengerHTML = passengers.length
 
-    ? passengers.map((passenger, index) => {
+    ? passengers.map((p, i) => {
 
         const name =
-          passenger?.name ||
-          passenger?.passengerName ||
-          `Passenger ${index + 1}`;
-
+          p?.name ||
+          p?.passengerName ||
+          `Passenger ${i + 1}`;
 
         const booking =
-          passenger?.booking?.details ||
-          passenger?.booking?.status ||
-          passenger?.bookingStatus ||
+          p?.booking?.details ||
+          p?.booking?.status ||
+          p?.bookingStatus ||
           "-";
-
 
         const current =
-          passenger?.current?.details ||
-          passenger?.current?.status ||
-          passenger?.currentStatus ||
+          p?.current?.details ||
+          p?.current?.status ||
+          p?.currentStatus ||
           "-";
-
 
         const coach =
-          passenger?.current?.coach ||
-          passenger?.coach ||
+          p?.current?.coach ||
+          p?.coach ||
           "-";
-
 
         const berth =
-          passenger?.current?.berth ||
-          passenger?.berth ||
+          p?.current?.berth ||
+          p?.berth ||
           "-";
 
-
         return `
-
           <div class="passenger">
 
             <strong>
-              ${escapeHTML(name)}
+              👤 ${escapeHTML(name)}
             </strong>
 
             <span>
@@ -247,25 +201,15 @@ function showResult(data, pnr) {
             </span>
 
           </div>
-
         `;
 
       }).join("")
 
     : `
-
       <div class="passenger">
-
-        <strong>
-          Passenger Information
-        </strong>
-
-        <span>
-          Passenger details are not available in the API response.
-        </span>
-
+        <strong>👤 Passenger Details</strong>
+        <span>Passenger information is not available.</span>
       </div>
-
     `;
 
 
@@ -276,16 +220,14 @@ function showResult(data, pnr) {
       <div class="result-head">
 
         <div>
-
           <small>PNR NUMBER</small>
 
           <div class="pnr">
             ${escapeHTML(data?.pnr || pnr)}
           </div>
-
         </div>
 
-        <div class="status">
+        <div class="status ${statusClass}">
           ${escapeHTML(status)}
         </div>
 
@@ -293,79 +235,41 @@ function showResult(data, pnr) {
 
 
       <div class="train">
-
         🚆 ${escapeHTML(trainNumber)}
-        -
-        ${escapeHTML(trainName)}
-
+        - ${escapeHTML(trainName)}
       </div>
 
 
       <div class="grid">
 
         <div class="item">
-
           <small>Journey Date</small>
-
-          <b>
-            ${escapeHTML(journeyDate)}
-          </b>
-
+          <b>${escapeHTML(journeyDate)}</b>
         </div>
 
-
         <div class="item">
-
           <small>From</small>
-
-          <b>
-            ${escapeHTML(source)}
-          </b>
-
+          <b>${escapeHTML(source)}</b>
         </div>
 
-
         <div class="item">
-
           <small>To</small>
-
-          <b>
-            ${escapeHTML(destination)}
-          </b>
-
+          <b>${escapeHTML(destination)}</b>
         </div>
 
-
         <div class="item">
-
           <small>Class</small>
-
-          <b>
-            ${escapeHTML(travelClass)}
-          </b>
-
+          <b>${escapeHTML(travelClass)}</b>
         </div>
 
-
         <div class="item">
-
           <small>Chart Status</small>
-
-          <b>
-            ${escapeHTML(chartStatus)}
-          </b>
-
+          <b>${escapeHTML(chartStatus)}</b>
         </div>
 
-
         <div class="item">
-
           <small>Passengers</small>
-
-          <b>
-            ${passengers.length || "-"}
-          </b>
-
+          <b>${passengers.length || "-"}</b>
         </div>
 
       </div>
@@ -373,9 +277,7 @@ function showResult(data, pnr) {
 
       <div class="passengers">
 
-        <h3>
-          👤 Passenger Status
-        </h3>
+        <h3>Passenger Status</h3>
 
         ${passengerHTML}
 
@@ -385,68 +287,74 @@ function showResult(data, pnr) {
       <div class="result-actions">
 
         <button
-          type="button"
           class="secondary-btn"
-          onclick="refreshPNR('${escapeHTML(pnr)}')"
-        >
+          onclick="refreshPNR('${escapeHTML(pnr)}')">
           🔄 Refresh
         </button>
 
-
         <button
-          type="button"
           class="secondary-btn"
-          onclick="sharePNR('${escapeHTML(pnr)}')"
-        >
+          onclick="sharePNR('${escapeHTML(pnr)}')">
           📤 Share
         </button>
 
-
         <button
-          type="button"
           class="secondary-btn"
-          onclick="printPNR()"
-        >
+          onclick="window.print()">
           🖨️ Print
         </button>
 
       </div>
 
     </div>
-
   `;
-
 
   resultBox.scrollIntoView({
     behavior: "smooth",
-    block: "start"
+    block: "nearest"
   });
+}
 
+
+function getStatusClass(status) {
+
+  const value = String(status).toUpperCase();
+
+  if (
+    value.includes("CNF") ||
+    value.includes("CONFIRM")
+  ) {
+    return "status-confirmed";
+  }
+
+  if (value.includes("RAC")) {
+    return "status-rac";
+  }
+
+  if (
+    value.includes("WL") ||
+    value.includes("WAIT")
+  ) {
+    return "status-wl";
+  }
+
+  return "";
 }
 
 
 function refreshPNR(pnr) {
-
   input.value = pnr;
-
   checkPNR();
-
 }
 
 
 async function sharePNR(pnr) {
 
   const shareData = {
-
     title: "AINEX E Ticket - PNR Status",
-
-    text:
-      `Check PNR Status: ${pnr}`,
-
+    text: `Check PNR Status: ${pnr}`,
     url: window.location.href
-
   };
-
 
   try {
 
@@ -464,19 +372,9 @@ async function sharePNR(pnr) {
 
     }
 
-  } catch (error) {
-
+  } catch (e) {
     console.log("Share cancelled.");
-
   }
-
-}
-
-
-function printPNR() {
-
-  window.print();
-
 }
 
 
