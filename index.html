@@ -1,70 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<meta name="description" content="AINEX E Ticket - Check Indian Railway PNR status online.">
-<title>AINEX E Ticket | PNR Status</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>AINEX E Ticket | PNR Status</title>
+
+  <meta
+    name="description"
+    content="Check Indian Railway PNR status online with AINEX E Ticket."
+  >
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  >
+
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<main class="app">
+<main class="page">
 
-  <header class="brand">
+  <!-- BRAND -->
+  <section class="brand">
+
     <div class="brand-icon">🚆</div>
+
     <div>
-      <h1>AINEX <b>E Ticket</b></h1>
-      <p>Railway PNR & Ticket Information</p>
+      <h1>
+        AINEX <span>E Ticket</span>
+      </h1>
+
+      <p>
+        Railway Services • PNR • Train Information
+      </p>
     </div>
-  </header>
 
-  <section class="hero">
+  </section>
 
-    <div class="tag">🚆 Indian Railway PNR Checker</div>
 
-    <h2>Check Your <span>PNR Status</span> Online</h2>
+  <!-- MAIN PNR AREA -->
+  <section class="pnr-section">
 
-    <p class="intro">
-      Enter your 10-digit PNR number and get the latest railway ticket status quickly.
+    <div class="checker-label">
+      🚆 Indian Railway PNR Checker
+    </div>
+
+    <h2>
+      Check Your
+      <span>PNR Status</span>
+      Online
+    </h2>
+
+    <p class="subtitle">
+      Enter your 10-digit PNR number and get the latest
+      railway ticket status.
     </p>
 
-    <div class="checker">
 
-      <div class="checker-title">
-        <div class="ticket-icon">🎫</div>
+    <!-- CHECKER CARD -->
+    <div class="checker-card">
+
+      <div class="card-title">
+
+        <div class="ticket-icon">
+          🎫
+        </div>
+
         <div>
           <h3>Check PNR Status</h3>
           <p>Enter your 10-digit PNR number</p>
         </div>
+
       </div>
 
-      <label for="pnr">PNR Number</label>
 
-      <input
-        id="pnr"
-        type="tel"
-        inputmode="numeric"
-        maxlength="10"
-        autocomplete="off"
-        placeholder="Enter 10 digit PNR"
-      >
+      <form id="pnrForm">
 
-      <button id="checkBtn" type="button">
-        🔍 Check Status
-      </button>
+        <label for="pnr">
+          PNR Number
+        </label>
 
-      <div id="loading" class="loading hidden">
-        <span></span>
-        Fetching latest PNR status...
-      </div>
+        <div class="input-box">
 
-      <div id="error" class="error hidden"></div>
+          <small>PNR</small>
 
-      <div id="result" class="result hidden"></div>
+          <input
+            id="pnr"
+            name="pnr"
+            type="text"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            maxlength="10"
+            autocomplete="off"
+            placeholder="Enter 10 digit PNR"
+            required
+          >
 
-      <div class="secure">
+        </div>
+
+
+        <button
+          id="checkBtn"
+          type="submit"
+        >
+          🔎 Check Status
+        </button>
+
+      </form>
+
+
+      <!-- API RESULT WILL APPEAR HERE -->
+      <div
+        id="result"
+        class="result-container"
+        aria-live="polite"
+      ></div>
+
+
+      <div class="privacy">
         🔒 Your PNR is used only to fetch the current status.
       </div>
 
@@ -72,8 +135,28 @@
 
   </section>
 
+
+  <!-- FOOTER -->
+  <footer>
+
+    <strong>
+      🚆 AINEX E Ticket
+    </strong>
+
+    <span>
+      Railway PNR & Ticket Information Services
+    </span>
+
+    <small>
+      © 2026 AINEX Services
+    </small>
+
+  </footer>
+
 </main>
 
+
 <script src="script.js"></script>
+
 </body>
 </html>
