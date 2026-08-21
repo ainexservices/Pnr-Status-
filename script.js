@@ -15,42 +15,51 @@ form.addEventListener("submit", async (e) => {
 
   button.disabled = true;
   button.innerHTML = "⏳ Checking...";
+
   resultBox.innerHTML = `
     <div class="loading">
       <div class="loader"></div>
-      <b>Checking PNR Status...</b>
-      <span>Please wait a moment</span>
+      <strong>Checking PNR Status...</strong>
+      <span>Please wait...</span>
     </div>
   `;
 
   try {
     const response = await fetch(`/api/pnr?pnr=${pnr}`);
-    const result = await response.json();
+    const json = await response.json();
 
-    if (!response.ok || result.success === false) {
-      throw new Error(result.message || result.error || "Unable to fetch PNR status.");
+    if (!response.ok || json.success === false) {
+      throw new Error(
+        json.message ||
+        json.error ||
+        "Unable to fetch PNR status."
+      );
     }
 
-    renderResult(result.data);
+    renderResult(json.data || json);
 
   } catch (error) {
     console.error("PNR Error:", error);
-    showError(error.message || "Something went wrong.");
+    showError(error.message || "Unable to fetch PNR status.");
   }
 
   button.disabled = false;
   button.innerHTML = "🔎 Check Status";
 });
 
-function renderResult(d) {
-  const train = d?.train || {};
-  const journey = d?.journey || {};
+
+function renderResult(data) {
+
+  const train = data?.train || {};
+  const journey = data?.journey || {};
   const source = journey?.source || {};
   const destination = journey?.destination || {};
-  const booking = d?.booking || {};
-  const passengers = Array.isArray(d?.passengers) ? d.passengers : [];
+  const booking = data?.booking || {};
+  const passengers = Array.isArray(data?.passengers)
+    ? data.passengers
+    : [];
 
-  const status = getOverallStatus(passengers);
+  const overall = getOverallStatus(passengers);
 
   resultBox.innerHTML = `
     <div class="result-card">
@@ -58,86 +67,103 @@ function renderResult(d) {
       <div class="result-head">
         <div>
           <small>PNR RESULT</small>
-          <h2>PNR ${safe(d?.pnr)}</h2>
-          <p>${status.label}</p>
+          <h2>PNR ${text(data?.pnr)}</h2>
+          <p>${overall.label}</p>
         </div>
-        <div class="status-badge ${status.class}">
-          ${status.code}
+
+        <div class="status-badge ${overall.class}">
+          ${overall.code}
         </div>
       </div>
 
+
       <div class="route">
+
         <div>
           <small>FROM</small>
-          <strong>${safe(source.name)}</strong>
-          <span>${safe(source.code)}</span>
+          <strong>${locationText(source)}</strong>
         </div>
 
         <div class="arrow">→</div>
 
         <div class="right">
           <small>TO</small>
-          <strong>${safe(destination.name)}</strong>
-          <span>${safe(destination.code)}</span>
+          <strong>${locationText(destination)}</strong>
         </div>
+
       </div>
+
 
       <div class="info-grid">
 
         <div>
           <small>TRAIN</small>
-          <strong>${safe(train.name)}</strong>
+          <strong>${text(train?.name)}</strong>
         </div>
 
         <div>
           <small>TRAIN NUMBER</small>
-          <strong>${safe(train.number)}</strong>
+          <strong>${text(train?.number)}</strong>
         </div>
 
         <div>
           <small>JOURNEY DATE</small>
-          <strong>${safe(journey.dateOfJourney)}</strong>
+          <strong>${text(
+            journey?.dateOfJourney ||
+            journey?.date ||
+            data?.journeyDate
+          )}</strong>
         </div>
 
         <div>
           <small>CLASS</small>
-          <strong>${safe(journey.class)}</strong>
+          <strong>${objectText(
+            journey?.class ||
+            journey?.travelClass
+          )}</strong>
         </div>
 
         <div>
           <small>QUOTA</small>
-          <strong>${safe(journey.quota)}</strong>
-        </div>
-
-        <div>
-          <small>CHART</small>
-          <strong>${safe(d?.chart?.status)}</strong>
+          <strong>${objectText(journey?.quota)}</strong>
         </div>
 
         <div>
           <small>FARE</small>
-          <strong>₹${safe(booking.fare)}</strong>
-        </div>
-
-        <div>
-          <small>PNR</small>
-          <strong>${safe(d?.pnr)}</strong>
+          <strong>₹${objectText(
+            booking?.fare ||
+            data?.fare
+          )}</strong>
         </div>
 
       </div>
+
 
       <div class="passenger-title">
         Passenger Details
-        <span>${passengers.length} Passenger${passengers.length !== 1 ? "s" : ""}</span>
+        <span>
+          ${passengers.length}
+          Passenger${passengers.length !== 1 ? "s" : ""}
+        </span>
       </div>
 
+
       <div class="passengers">
+
         ${
           passengers.length
-            ? passengers.map((p, i) => passengerHTML(p, i)).join("")
-            : `<div class="empty">Passenger information not available.</div>`
+            ? passengers.map((passenger, index) =>
+                passengerHTML(passenger, index)
+              ).join("")
+            : `
+              <div class="empty">
+                Passenger information not available.
+              </div>
+            `
         }
+
       </div>
+
 
       <div class="privacy">
         🔒 Your PNR is used only to fetch the current status.
@@ -152,50 +178,110 @@ function renderResult(d) {
   });
 }
 
+
+/* PASSENGER */
+
 function passengerHTML(p, index) {
+
   const booking = p?.booking || {};
   const current = p?.current || {};
 
-  const currentStatus =
-    current.status ||
-    getStatusCode(current.details) ||
-    "-";
+  const name =
+    p?.name ||
+    p?.passengerName ||
+    p?.passenger?.name ||
+    p?.details?.name ||
+    `Passenger ${index + 1}`;
 
-  const statusClass = statusColor(currentStatus);
+  const bookingStatus = objectText(
+    booking?.details ||
+    booking?.status ||
+    booking
+  );
+
+  const currentStatus = objectText(
+    current?.details ||
+    current?.status ||
+    current
+  );
+
+  const coach =
+    objectText(
+      current?.coach ||
+      current?.coachNumber ||
+      booking?.coach ||
+      booking?.coachNumber
+    );
+
+  const berth =
+    objectText(
+      current?.berthNo ||
+      current?.berth ||
+      current?.berthNumber ||
+      booking?.berthNo ||
+      booking?.berth
+    );
+
+  const seat =
+    objectText(
+      current?.berthCode ||
+      current?.seat ||
+      booking?.berthCode
+    );
+
+  const statusCode =
+    getStatusCode(currentStatus) ||
+    getStatusCode(bookingStatus);
 
   return `
     <div class="passenger">
 
       <div class="passenger-top">
-        <strong>${safe(p?.serialNumber || `Passenger ${index + 1}`)}</strong>
 
-        <span class="passenger-status ${statusClass}">
-          ${safe(currentStatus)}
+        <div>
+          <strong>
+            ${text(name)}
+          </strong>
+        </div>
+
+        <span class="passenger-status ${statusColor(statusCode)}">
+          ${text(statusCode || "STATUS")}
         </span>
+
       </div>
+
 
       <div class="passenger-grid">
 
         <div>
           <small>BOOKING STATUS</small>
-          <strong>${safe(booking.details || booking.status)}</strong>
+          <strong>
+            ${text(bookingStatus)}
+          </strong>
         </div>
+
 
         <div>
           <small>CURRENT STATUS</small>
-          <strong>${safe(current.details || current.status)}</strong>
+          <strong>
+            ${text(currentStatus)}
+          </strong>
         </div>
+
 
         <div>
           <small>COACH</small>
-          <strong>${safe(current.coach || booking.coach)}</strong>
+          <strong>
+            ${text(coach)}
+          </strong>
         </div>
 
+
         <div>
-          <small>BERTH</small>
+          <small>BERTH / SEAT</small>
           <strong>
-            ${safe(current.berthNo || booking.berthNo)}
-            ${current.berthCode ? ` (${safe(current.berthCode)})` : ""}
+            ${text(berth)}
+            ${seat !== "-" ? ` (${text(seat)})` : ""}
           </strong>
         </div>
 
@@ -205,7 +291,143 @@ function passengerHTML(p, index) {
   `;
 }
 
+
+/* LOCATION */
+
+function locationText(location) {
+
+  if (!location) return "-";
+
+  if (typeof location === "string") {
+    return text(location);
+  }
+
+  const name =
+    location?.name ||
+    location?.stationName ||
+    location?.station?.name ||
+    location?.details?.name;
+
+  const code =
+    location?.code ||
+    location?.stationCode ||
+    location?.station?.code;
+
+  if (name && typeof name === "string") {
+    return `${text(name)}${code ? ` (${text(code)})` : ""}`;
+  }
+
+  if (code) {
+    return text(code);
+  }
+
+  return objectText(location);
+}
+
+
+/* OBJECT → TEXT */
+
+function objectText(value) {
+
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
+    return "-";
+  }
+
+  if (typeof value === "string" ||
+      typeof value === "number") {
+    return String(value);
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .map(v => objectText(v))
+      .filter(v => v !== "-")
+      .join(", ") || "-";
+  }
+
+  if (typeof value === "object") {
+
+    const keys = [
+      "name",
+      "value",
+      "details",
+      "status",
+      "text",
+      "description",
+      "code",
+      "number",
+      "label"
+    ];
+
+    for (const key of keys) {
+
+      if (
+        value[key] !== undefined &&
+        value[key] !== null &&
+        value[key] !== ""
+      ) {
+
+        const result = objectText(value[key]);
+
+        if (
+          result !== "-" &&
+          result !== "[object Object]"
+        ) {
+          return result;
+        }
+      }
+    }
+
+    return "-";
+  }
+
+  return "-";
+}
+
+
+/* SAFE TEXT */
+
+function text(value) {
+
+  const result = objectText(value);
+
+  if (
+    !result ||
+    result === "[object Object]"
+  ) {
+    return "-";
+  }
+
+  return String(result)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+
+/* STATUS */
+
+function getStatusCode(value) {
+
+  const s = String(value || "").toUpperCase();
+
+  if (s.includes("CNF")) return "CNF";
+  if (s.includes("RAC")) return "RAC";
+  if (s.includes("WL")) return "WL";
+  if (s.includes("CAN")) return "CAN";
+
+  return "";
+}
+
+
 function getOverallStatus(passengers) {
+
   if (!passengers.length) {
     return {
       code: "—",
@@ -214,14 +436,25 @@ function getOverallStatus(passengers) {
     };
   }
 
-  const statuses = passengers.map(p =>
-    String(
+  const statuses = passengers.map(p => {
+
+    const current = objectText(
+      p?.current?.details ||
       p?.current?.status ||
-      getStatusCode(p?.current?.details) ||
+      p?.current
+    );
+
+    const booking = objectText(
+      p?.booking?.details ||
       p?.booking?.status ||
-      ""
-    ).toUpperCase()
-  );
+      p?.booking
+    );
+
+    return (
+      getStatusCode(current) ||
+      getStatusCode(booking)
+    );
+  });
 
   if (statuses.every(s => s === "CNF")) {
     return {
@@ -239,7 +472,7 @@ function getOverallStatus(passengers) {
     };
   }
 
-  if (statuses.some(s => s.includes("WL"))) {
+  if (statuses.some(s => s === "WL")) {
     return {
       code: "WL",
       label: "Waiting List",
@@ -256,69 +489,38 @@ function getOverallStatus(passengers) {
   }
 
   return {
-    code: statuses[0] || "—",
+    code: "—",
     label: "Status Available",
     class: "unknown"
   };
 }
 
-function getStatusCode(value) {
-  if (!value) return "";
-
-  const text = String(value).toUpperCase();
-
-  if (text.includes("CNF")) return "CNF";
-  if (text.includes("RAC")) return "RAC";
-  if (text.includes("WL")) return "WL";
-  if (text.includes("CAN")) return "CAN";
-
-  return "";
-}
 
 function statusColor(status) {
-  status = String(status).toUpperCase();
 
   if (status === "CNF") return "confirmed";
   if (status === "RAC") return "rac";
-  if (status.includes("WL")) return "waiting";
+  if (status === "WL") return "waiting";
   if (status === "CAN") return "cancelled";
 
   return "unknown";
 }
 
-function safe(value) {
-  if (
-    value === null ||
-    value === undefined ||
-    value === "" ||
-    value === "[object Object]"
-  ) {
-    return "-";
-  }
 
-  if (typeof value === "object") {
-    if (value.name) return String(value.name);
-    if (value.code) return String(value.code);
-    if (value.details) return String(value.details);
-    return "-";
-  }
-
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
+/* ERROR */
 
 function showError(message) {
+
   resultBox.innerHTML = `
     <div class="error-box">
+
       <div class="error-icon">!</div>
+
       <div>
         <strong>Unable to fetch PNR</strong>
-        <p>${safe(message)}</p>
+        <p>${text(message)}</p>
       </div>
+
     </div>
   `;
 }
