@@ -13,26 +13,31 @@ export default {
 
     try {
 
-      const key = process.env.RAILKIT_API_KEY;
+      const apiKey = process.env.RAILKIT_API_KEY;
 
-      if (!key) {
+      if (!apiKey) {
         return Response.json({
           success: false,
-          message: "RAILKIT_API_KEY is missing."
+          message: "RAILKIT_API_KEY is missing in Vercel."
         }, { status: 500 });
       }
 
-      configure(key);
+      configure(apiKey);
 
       const url = new URL(request.url);
       const action = url.searchParams.get("action");
 
+      const date = url.searchParams.get("date");
+      const train = url.searchParams.get("train");
+      const from = (url.searchParams.get("from") || "").toUpperCase();
+      const to = (url.searchParams.get("to") || "").toUpperCase();
+
       let result;
 
-      if (action === "live") {
 
-        const train = url.searchParams.get("train");
-        const date = url.searchParams.get("date") || undefined;
+      /* LIVE TRAIN */
+
+      if (action === "live") {
 
         if (!/^\d{5}$/.test(train || "")) {
           return Response.json({
@@ -41,11 +46,23 @@ export default {
           }, { status: 400 });
         }
 
-        result = await trackTrain(train, date);
+        if (!date) {
+          return Response.json({
+            success: false,
+            message: "Journey date is required."
+          }, { status: 400 });
+        }
 
-      } else if (action === "train") {
+        result = await trackTrain(
+          train,
+          toRailDate(date)
+        );
+      }
 
-        const train = url.searchParams.get("train");
+
+      /* TRAIN INFO */
+
+      else if (action === "train") {
 
         if (!/^\d{5}$/.test(train || "")) {
           return Response.json({
@@ -55,8 +72,12 @@ export default {
         }
 
         result = await getTrainInfo(train);
+      }
 
-      } else if (action === "station") {
+
+      /* LIVE STATION */
+
+      else if (action === "station") {
 
         const station = (
           url.searchParams.get("station") || ""
@@ -69,17 +90,13 @@ export default {
           }, { status: 400 });
         }
 
-        result = await liveAtStation(station);
+        result = await liveAtStation(station, 2);
+      }
 
-      } else if (action === "search") {
 
-        const from = (
-          url.searchParams.get("from") || ""
-        ).toUpperCase();
+      /* TRAIN BETWEEN STATIONS */
 
-        const to = (
-          url.searchParams.get("to") || ""
-        ).toUpperCase();
+      else if (action === "search") {
 
         if (!from || !to) {
           return Response.json({
@@ -88,21 +105,21 @@ export default {
           }, { status: 400 });
         }
 
-        result = await searchTrainBetweenStations(from, to);
+        result = await searchTrainBetweenStations(
+          from,
+          to
+        );
+      }
 
-      } else if (action === "availability") {
 
-        const train = url.searchParams.get("train");
-        const from = (
-          url.searchParams.get("from") || ""
-        ).toUpperCase();
-        const to = (
-          url.searchParams.get("to") || ""
-        ).toUpperCase();
-        const date = url.searchParams.get("date");
+      /* SEAT AVAILABILITY */
+
+      else if (action === "availability") {
+
         const coach = (
           url.searchParams.get("coach") || ""
         ).toUpperCase();
+
         const quota = (
           url.searchParams.get("quota") || ""
         ).toUpperCase();
@@ -125,24 +142,21 @@ export default {
           train,
           from,
           to,
-          date,
+          toRailDate(date),
           coach,
           quota
         );
+      }
 
-      } else if (action === "fare") {
 
-        const train = url.searchParams.get("train");
-        const from = (
-          url.searchParams.get("from") || ""
-        ).toUpperCase();
-        const to = (
-          url.searchParams.get("to") || ""
-        ).toUpperCase();
-        const date = url.searchParams.get("date");
+      /* FARE */
+
+      else if (action === "fare") {
+
         const coach = (
           url.searchParams.get("coach") || ""
         ).toUpperCase();
+
         const quota = (
           url.searchParams.get("quota") || ""
         ).toUpperCase();
@@ -165,19 +179,22 @@ export default {
           train,
           from,
           to,
-          date,
+          toRailDate(date),
           coach,
           quota
         );
+      }
 
-      } else {
+
+      else {
 
         return Response.json({
           success: false,
-          message: "Invalid action."
+          message: "Invalid railway service."
         }, { status: 400 });
 
       }
+
 
       return Response.json(result, {
         status: result?.success === false ? 400 : 200
@@ -185,13 +202,30 @@ export default {
 
     } catch (error) {
 
-      console.error("AINEX Railway Error:", error);
+      console.error("AINEX RailKit Error:", error);
 
       return Response.json({
         success: false,
-        message: error?.message || "RailKit request failed."
+        message:
+          error?.message ||
+          "RailKit request failed."
       }, { status: 500 });
-
     }
   }
 };
+
+
+/* YYYY-MM-DD → DD-MM-YYYY */
+
+function toRailDate(date) {
+
+  if (!date) return "";
+
+  const parts = date.split("-");
+
+  if (parts.length !== 3) {
+    return date;
+  }
+
+  return `${parts[2]}-${parts[1]}-${parts[0]}`;
+}
