@@ -1,8 +1,12 @@
 {
-  "name":"ainex-e-ticket",
-  "version":"1.0.0",
-  "private":true,
-  "dependencies":{
-    "railkit":"^4.1.0"
+  "name": "ainex-e-ticket",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "22.x"
+  },
+  "dependencies": {
+    "railkit": "^4.1.0"
   }
 }
