@@ -1,275 +1,217 @@
-const input = document.getElementById("pnrInput");
-const button = document.getElementById("checkBtn");
-const errorBox = document.getElementById("error");
+const pnrInput = document.getElementById("pnrInput");
+const checkBtn = document.getElementById("checkBtn");
+const btnText = document.getElementById("btnText");
+const loader = document.getElementById("loader");
+const errorBox = document.getElementById("errorBox");
+const resultSection = document.getElementById("resultSection");
 const resultBox = document.getElementById("resultBox");
+const clearBtn = document.getElementById("clearBtn");
 
-input.addEventListener("input", () => {
-  input.value = input.value.replace(/\D/g, "").slice(0, 10);
-  errorBox.textContent = "";
+pnrInput.addEventListener("input", () => {
+  pnrInput.value = pnrInput.value.replace(/\D/g, "").slice(0, 10);
+  clearBtn.style.display = pnrInput.value ? "block" : "none";
+  errorBox.classList.add("hidden");
 });
 
-input.addEventListener("keydown", e => {
-  if (e.key === "Enter") checkPNR();
+clearBtn.addEventListener("click", () => {
+  pnrInput.value = "";
+  clearBtn.style.display = "none";
+  pnrInput.focus();
 });
 
-button.addEventListener("click", checkPNR);
+checkBtn.addEventListener("click", checkPNR);
 
-async function checkPNR() {
+pnrInput.addEventListener("keydown", e => {
+  if(e.key === "Enter") checkPNR();
+});
 
-  const pnr = input.value.trim();
+async function checkPNR(){
 
-  errorBox.textContent = "";
-  resultBox.innerHTML = "";
+  const pnr = pnrInput.value.trim();
 
-  if (!/^\d{10}$/.test(pnr)) {
-    errorBox.textContent = "Please enter a valid 10-digit PNR number.";
-    input.focus();
+  errorBox.classList.add("hidden");
+
+  if(!/^\d{10}$/.test(pnr)){
+    showError("Please enter a valid 10-digit PNR number.");
     return;
   }
 
-  button.disabled = true;
-  button.textContent = "⏳ Checking...";
+  setLoading(true);
 
-  resultBox.innerHTML = `
-    <div class="loading-card">
-      <div class="loading-spinner"></div>
-      <strong>Checking PNR Status</strong>
-      <span>Please wait...</span>
-    </div>
-  `;
+  try{
 
-  try {
-
-    const response = await fetch(
-      `/api/pnr?pnr=${encodeURIComponent(pnr)}`,
-      {
-        headers: {
-          Accept: "application/json"
-        }
+    const response = await fetch(`/api/pnr?pnr=${encodeURIComponent(pnr)}`, {
+      method:"GET",
+      headers:{
+        "Accept":"application/json"
       }
-    );
+    });
 
-    const type = response.headers.get("content-type") || "";
+    const text = await response.text();
 
-    if (!type.includes("application/json")) {
-      const text = await response.text();
-      throw new Error(text || "Server returned an invalid response.");
+    let data;
+
+    try{
+      data = JSON.parse(text);
+    }catch{
+      throw new Error(
+        "PNR service returned an invalid response. Please try again."
+      );
     }
 
-    const result = await response.json();
-
-    if (!response.ok || result?.success === false) {
+    if(!response.ok || data.success === false){
       throw new Error(
-        result?.message ||
-        result?.error ||
+        data.message ||
+        data.error ||
         "Unable to fetch PNR status."
       );
     }
 
-    showResult(result?.data || result, pnr);
+    renderResult(data);
 
-  } catch (error) {
+  }catch(error){
 
     console.error(error);
 
-    resultBox.innerHTML = "";
+    showError(
+      error.message ||
+      "Unable to check PNR right now. Please try again."
+    );
 
-    errorBox.textContent =
-      error.message || "Unable to fetch PNR status.";
+  }finally{
+    setLoading(false);
+  }
+}
 
-  } finally {
 
-    button.disabled = false;
-    button.textContent = "🔍 Check Status";
+function setLoading(status){
+
+  checkBtn.disabled = status;
+
+  if(status){
+
+    btnText.classList.add("hidden");
+    loader.classList.remove("hidden");
+
+  }else{
+
+    btnText.classList.remove("hidden");
+    loader.classList.add("hidden");
 
   }
 }
 
 
-function showResult(data, pnr) {
+function showError(message){
 
-  const train = data?.train || {};
-  const journey = data?.journey || {};
+  errorBox.textContent = "⚠️ " + message;
+  errorBox.classList.remove("hidden");
 
-  const passengers =
-    Array.isArray(data?.passengers)
-      ? data.passengers
-      : [];
+  resultSection.classList.add("hidden");
+}
 
-  const source =
-    journey?.source?.name ||
-    journey?.source?.code ||
-    data?.source ||
-    "-";
 
-  const destination =
-    journey?.destination?.name ||
-    journey?.destination?.code ||
-    data?.destination ||
-    "-";
+function renderResult(data){
+
+  const pnr =
+    data.PnrNumber ||
+    data.pnrNumber ||
+    data.pnr ||
+    pnrInput.value;
 
   const trainNumber =
-    train?.number ||
-    data?.trainNumber ||
+    data.TrainNumber ||
+    data.trainNumber ||
     "-";
 
   const trainName =
-    train?.name ||
-    data?.trainName ||
+    data.TrainName ||
+    data.trainName ||
     "Train";
 
+  const from =
+    data.From ||
+    data.from ||
+    "-";
+
+  const to =
+    data.To ||
+    data.to ||
+    "-";
+
   const journeyDate =
-    journey?.date ||
-    data?.journeyDate ||
+    data.JourneyDate ||
+    data.journeyDate ||
     "-";
 
-  const travelClass =
-    journey?.class ||
-    data?.class ||
+  const journeyClass =
+    data.JourneyClass ||
+    data.journeyClass ||
     "-";
 
-  const chartStatus =
-    data?.chartStatus ||
-    data?.chart_status ||
-    "-";
-
-  const status =
-    data?.status ||
-    data?.pnrStatus ||
-    "AVAILABLE";
-
-
-  const statusClass = getStatusClass(status);
-
-
-  const passengerHTML = passengers.length
-
-    ? passengers.map((p, i) => {
-
-        const name =
-          p?.name ||
-          p?.passengerName ||
-          `Passenger ${i + 1}`;
-
-        const booking =
-          p?.booking?.details ||
-          p?.booking?.status ||
-          p?.bookingStatus ||
-          "-";
-
-        const current =
-          p?.current?.details ||
-          p?.current?.status ||
-          p?.currentStatus ||
-          "-";
-
-        const coach =
-          p?.current?.coach ||
-          p?.coach ||
-          "-";
-
-        const berth =
-          p?.current?.berth ||
-          p?.berth ||
-          "-";
-
-        return `
-          <div class="passenger">
-
-            <strong>
-              👤 ${escapeHTML(name)}
-            </strong>
-
-            <span>
-              Booking:
-              <b>${escapeHTML(booking)}</b>
-            </span>
-
-            <span>
-              Current:
-              <b>${escapeHTML(current)}</b>
-            </span>
-
-            <span>
-              Coach:
-              <b>${escapeHTML(coach)}</b>
-            </span>
-
-            <span>
-              Berth:
-              <b>${escapeHTML(berth)}</b>
-            </span>
-
-          </div>
-        `;
-
-      }).join("")
-
-    : `
-      <div class="passenger">
-        <strong>👤 Passenger Details</strong>
-        <span>Passenger information is not available.</span>
-      </div>
-    `;
-
+  const passengers =
+    data.Passengers ||
+    data.passengers ||
+    [];
 
   resultBox.innerHTML = `
 
-    <div class="result">
+    <div class="result-card">
 
       <div class="result-head">
 
         <div>
-          <small>PNR NUMBER</small>
-
-          <div class="pnr">
-            ${escapeHTML(data?.pnr || pnr)}
-          </div>
+          <h2>🎫 PNR Status</h2>
+          <p>Your latest railway reservation information</p>
         </div>
 
-        <div class="status ${statusClass}">
-          ${escapeHTML(status)}
+        <div class="pnr-number">
+          PNR ${escapeHTML(pnr)}
         </div>
 
       </div>
 
 
-      <div class="train">
-        🚆 ${escapeHTML(trainNumber)}
-        - ${escapeHTML(trainName)}
-      </div>
+      <div class="train-info">
 
-
-      <div class="grid">
-
-        <div class="item">
-          <small>Journey Date</small>
-          <b>${escapeHTML(journeyDate)}</b>
+        <div class="info-item">
+          <small>TRAIN</small>
+          <strong>${escapeHTML(trainNumber)}</strong>
         </div>
 
-        <div class="item">
-          <small>From</small>
-          <b>${escapeHTML(source)}</b>
+        <div class="info-item">
+          <small>TRAIN NAME</small>
+          <strong>${escapeHTML(trainName)}</strong>
         </div>
 
-        <div class="item">
-          <small>To</small>
-          <b>${escapeHTML(destination)}</b>
+        <div class="info-item">
+          <small>FROM</small>
+          <strong>${escapeHTML(from)}</strong>
         </div>
 
-        <div class="item">
-          <small>Class</small>
-          <b>${escapeHTML(travelClass)}</b>
+        <div class="info-item">
+          <small>TO</small>
+          <strong>${escapeHTML(to)}</strong>
         </div>
 
-        <div class="item">
-          <small>Chart Status</small>
-          <b>${escapeHTML(chartStatus)}</b>
+        <div class="info-item">
+          <small>JOURNEY DATE</small>
+          <strong>${escapeHTML(journeyDate)}</strong>
         </div>
 
-        <div class="item">
-          <small>Passengers</small>
-          <b>${passengers.length || "-"}</b>
+        <div class="info-item">
+          <small>CLASS</small>
+          <strong>${escapeHTML(journeyClass)}</strong>
+        </div>
+
+        <div class="info-item">
+          <small>PASSENGERS</small>
+          <strong>${passengers.length || "-"}</strong>
+        </div>
+
+        <div class="info-item">
+          <small>STATUS</small>
+          <strong>${getOverallStatus(passengers)}</strong>
         </div>
 
       </div>
@@ -279,29 +221,25 @@ function showResult(data, pnr) {
 
         <h3>Passenger Status</h3>
 
-        ${passengerHTML}
+        ${
+          passengers.length
+          ? passengers.map((p,i) => passengerHTML(p,i)).join("")
+          : `<p style="color:#718096">
+               Passenger information not available.
+             </p>`
+        }
 
       </div>
 
 
       <div class="result-actions">
 
-        <button
-          class="secondary-btn"
-          onclick="refreshPNR('${escapeHTML(pnr)}')">
-          🔄 Refresh
+        <button class="copy-btn" onclick="copyPNR('${escapeHTML(pnr)}')">
+          📋 Copy PNR
         </button>
 
-        <button
-          class="secondary-btn"
-          onclick="sharePNR('${escapeHTML(pnr)}')">
-          📤 Share
-        </button>
-
-        <button
-          class="secondary-btn"
-          onclick="window.print()">
-          🖨️ Print
+        <button class="another-btn" onclick="checkAnother()">
+          🔄 Check Another PNR
         </button>
 
       </div>
@@ -309,82 +247,142 @@ function showResult(data, pnr) {
     </div>
   `;
 
-  resultBox.scrollIntoView({
-    behavior: "smooth",
-    block: "nearest"
-  });
+  resultSection.classList.remove("hidden");
+
+  setTimeout(() => {
+    resultSection.scrollIntoView({
+      behavior:"smooth",
+      block:"start"
+    });
+  },100);
 }
 
 
-function getStatusClass(status) {
+function passengerHTML(p,index){
 
-  const value = String(status).toUpperCase();
+  const booking =
+    p.BookingStatus ||
+    p.bookingStatus ||
+    p.booking?.details ||
+    p.booking?.status ||
+    "-";
 
-  if (
-    value.includes("CNF") ||
-    value.includes("CONFIRM")
-  ) {
-    return "status-confirmed";
+  const current =
+    p.CurrentStatus ||
+    p.currentStatus ||
+    p.current?.details ||
+    p.current?.status ||
+    "-";
+
+  const statusClass = getStatusClass(current);
+
+  return `
+
+    <div class="passenger">
+
+      <div>
+
+        <div class="passenger-name">
+          Passenger ${index + 1}
+        </div>
+
+        <div class="booking">
+          Booking: ${escapeHTML(booking)}
+        </div>
+
+      </div>
+
+      <div class="current ${statusClass}">
+        Current: ${escapeHTML(current)}
+      </div>
+
+    </div>
+
+  `;
+}
+
+
+function getStatusClass(status){
+
+  const s = String(status).toUpperCase();
+
+  if(
+    s.includes("CNF") ||
+    s.includes("CONFIRM")
+  ){
+    return "cnf";
   }
 
-  if (value.includes("RAC")) {
-    return "status-rac";
+  if(s.includes("RAC")){
+    return "rac";
   }
 
-  if (
-    value.includes("WL") ||
-    value.includes("WAIT")
-  ) {
-    return "status-wl";
+  if(
+    s.includes("WL") ||
+    s.includes("WAIT")
+  ){
+    return "wl";
   }
 
   return "";
 }
 
 
-function refreshPNR(pnr) {
-  input.value = pnr;
-  checkPNR();
+function getOverallStatus(passengers){
+
+  if(!passengers.length) return "-";
+
+  const statuses = passengers.map(p =>
+    String(
+      p.CurrentStatus ||
+      p.currentStatus ||
+      p.current?.status ||
+      ""
+    ).toUpperCase()
+  );
+
+  if(statuses.some(s => s.includes("CNF")))
+    return "CNF";
+
+  if(statuses.some(s => s.includes("RAC")))
+    return "RAC";
+
+  if(statuses.some(s => s.includes("WL")))
+    return "WL";
+
+  return "Available";
 }
 
 
-async function sharePNR(pnr) {
+function copyPNR(pnr){
 
-  const shareData = {
-    title: "AINEX E Ticket - PNR Status",
-    text: `Check PNR Status: ${pnr}`,
-    url: window.location.href
-  };
-
-  try {
-
-    if (navigator.share) {
-
-      await navigator.share(shareData);
-
-    } else {
-
-      await navigator.clipboard.writeText(
-        `PNR: ${pnr}\n${window.location.href}`
-      );
-
-      alert("PNR link copied!");
-
-    }
-
-  } catch (e) {
-    console.log("Share cancelled.");
-  }
+  navigator.clipboard.writeText(pnr)
+    .then(() => {
+      alert("PNR copied: " + pnr);
+    })
+    .catch(() => {});
 }
 
 
-function escapeHTML(value) {
+function checkAnother(){
 
-  return String(value ?? "-")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+  resultSection.classList.add("hidden");
 
+  window.scrollTo({
+    top:document.getElementById("pnr").offsetTop - 70,
+    behavior:"smooth"
+  });
+
+  pnrInput.focus();
+}
+
+
+function escapeHTML(value){
+
+  return String(value ?? "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
 }
