@@ -1,306 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>AINEX E Ticket | Railway PNR Status</title>
-
-  <meta
-    name="description"
-    content="Check Indian Railway PNR status online quickly with AINEX E Ticket."
-  >
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-  <link
-    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
-    rel="stylesheet"
-  >
-
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="description" content="AINEX E Ticket - Check Indian Railway PNR status online.">
+<title>AINEX E Ticket | PNR Status</title>
+<link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<main>
+<main class="app">
 
-  <!-- MAIN BRANDING -->
-
-  <section class="main-brand">
-
-    <div class="main-logo">
-      🚆
-    </div>
-
+  <header class="brand">
+    <div class="brand-icon">🚆</div>
     <div>
-      <h1>AINEX <span>E Ticket</span></h1>
-      <p>Railway Services • PNR • Train Information</p>
+      <h1>AINEX <b>E Ticket</b></h1>
+      <p>Railway PNR & Ticket Information</p>
     </div>
-
-  </section>
-
-
-  <!-- PNR HERO -->
+  </header>
 
   <section class="hero">
 
-    <div class="tag">
-      🚆 Indian Railway PNR Checker
-    </div>
+    <div class="tag">🚆 Indian Railway PNR Checker</div>
 
-    <h2>
-      Check Your <span>PNR Status</span> Online
-    </h2>
+    <h2>Check Your <span>PNR Status</span> Online</h2>
 
-    <p class="subtitle">
+    <p class="intro">
       Enter your 10-digit PNR number and get the latest railway ticket status quickly.
     </p>
 
+    <div class="checker">
 
-    <!-- PNR CHECKER -->
-
-    <div class="pnr-card">
-
-      <div class="card-title">
-
-        <div class="card-icon">
-          🎫
-        </div>
-
+      <div class="checker-title">
+        <div class="ticket-icon">🎫</div>
         <div>
           <h3>Check PNR Status</h3>
           <p>Enter your 10-digit PNR number</p>
         </div>
-
       </div>
 
+      <label for="pnr">PNR Number</label>
 
-      <form id="pnrForm">
-
-        <label for="pnrInput">
-          PNR Number
-        </label>
-
-        <div class="input-box">
-
-          <small>PNR</small>
-
-          <input
-            id="pnrInput"
-            name="pnr"
-            type="tel"
-            inputmode="numeric"
-            maxlength="10"
-            autocomplete="off"
-            placeholder="Enter 10 digit PNR"
-          >
-
-        </div>
-
-
-        <button
-          id="checkBtn"
-          type="submit"
-        >
-          🔎 Check Status
-        </button>
-
-      </form>
-
-
-      <!-- LOADING -->
-
-      <div
-        id="loading"
-        class="loading hidden"
+      <input
+        id="pnr"
+        type="tel"
+        inputmode="numeric"
+        maxlength="10"
+        autocomplete="off"
+        placeholder="Enter 10 digit PNR"
       >
+
+      <button id="checkBtn" type="button">
+        🔍 Check Status
+      </button>
+
+      <div id="loading" class="loading hidden">
         <span></span>
-        Checking your PNR...
+        Fetching latest PNR status...
       </div>
 
+      <div id="error" class="error hidden"></div>
 
-      <!-- ERROR -->
+      <div id="result" class="result hidden"></div>
 
-      <div
-        id="error"
-        class="error hidden"
-      ></div>
-
-
-      <div class="privacy">
+      <div class="secure">
         🔒 Your PNR is used only to fetch the current status.
       </div>
 
     </div>
 
-
-    <!-- STATUS KEY -->
-
-    <div class="status-key">
-
-      <div>
-        <b class="cnf">✓ CNF</b>
-        <small>Confirmed</small>
-      </div>
-
-      <div>
-        <b class="rac">● RAC</b>
-        <small>RAC Status</small>
-      </div>
-
-      <div>
-        <b class="wl">● WL</b>
-        <small>Waiting List</small>
-      </div>
-
-    </div>
-
   </section>
-
-
-  <!-- RESULT -->
-
-  <section
-    id="result"
-    class="result hidden"
-  >
-
-    <div class="result-head">
-
-      <div>
-        <span>PNR RESULT</span>
-        <h2>
-          PNR <span id="showPnr">-</span>
-        </h2>
-      </div>
-
-      <div
-        id="overallStatus"
-        class="status-badge"
-      >
-        -
-      </div>
-
-    </div>
-
-
-    <!-- JOURNEY -->
-
-    <div class="journey">
-
-      <div class="station">
-
-        <small>FROM</small>
-
-        <strong id="fromStation">
-          -
-        </strong>
-
-      </div>
-
-
-      <div class="journey-line">
-        🚆
-      </div>
-
-
-      <div class="station right">
-
-        <small>TO</small>
-
-        <strong id="toStation">
-          -
-        </strong>
-
-      </div>
-
-    </div>
-
-
-    <!-- TRAIN INFORMATION -->
-
-    <div class="info-grid">
-
-      <div class="info">
-        <small>TRAIN</small>
-        <strong id="trainInfo">-</strong>
-      </div>
-
-      <div class="info">
-        <small>JOURNEY DATE</small>
-        <strong id="journeyDate">-</strong>
-      </div>
-
-      <div class="info">
-        <small>CLASS</small>
-        <strong id="travelClass">-</strong>
-      </div>
-
-      <div class="info">
-        <small>QUOTA</small>
-        <strong id="quota">-</strong>
-      </div>
-
-      <div class="info">
-        <small>FARE</small>
-        <strong id="fare">-</strong>
-      </div>
-
-      <div class="info">
-        <small>PNR NUMBER</small>
-        <strong id="resultPnr">-</strong>
-      </div>
-
-    </div>
-
-
-    <!-- PASSENGERS -->
-
-    <div class="passenger-section">
-
-      <div class="section-title">
-
-        <h3>
-          Passenger Status
-        </h3>
-
-        <span id="passengerCount">
-          0 Passengers
-        </span>
-
-      </div>
-
-      <div id="passengerList"></div>
-
-    </div>
-
-  </section>
-
-
-  <!-- FOOTER -->
-
-  <footer>
-
-    <div class="footer-logo">
-      🚆 <strong>AINEX E Ticket</strong>
-    </div>
-
-    <p>
-      Railway PNR & Ticket Information Services
-    </p>
-
-    <small>
-      © 2026 AINEX Services. All rights reserved.
-    </small>
-
-  </footer>
 
 </main>
 
-
 <script src="script.js"></script>
-
 </body>
 </html>
