@@ -1,38 +1,43 @@
 import { configure, checkPNRStatus } from "railkit";
 
-export default async function handler(req, res) {
-  res.setHeader("Content-Type", "application/json");
+export default {
+  async fetch(request) {
+    try {
+      const url = new URL(request.url);
+      const pnr = url.searchParams.get("pnr");
 
-  const pnr = req.query?.pnr;
+      if (!pnr || !/^\d{10}$/.test(pnr)) {
+        return Response.json({
+          success: false,
+          message: "Please enter a valid 10-digit PNR number."
+        }, { status: 400 });
+      }
 
-  if (!pnr || !/^\d{10}$/.test(pnr)) {
-    return res.status(400).json({
-      success: false,
-      message: "Please enter a valid 10-digit PNR number."
-    });
+      const apiKey = process.env.RAILKIT_API_KEY;
+
+      if (!apiKey) {
+        return Response.json({
+          success: false,
+          message: "RAILKIT_API_KEY is missing in Vercel."
+        }, { status: 500 });
+      }
+
+      configure(apiKey);
+
+      const result = await checkPNRStatus(pnr);
+
+      return Response.json(result, {
+        status: result?.success === false ? 400 : 200
+      });
+
+    } catch (error) {
+
+      console.error("AINEX RailKit Error:", error);
+
+      return Response.json({
+        success: false,
+        message: error?.message || "RailKit request failed."
+      }, { status: 500 });
+    }
   }
-
-  const apiKey = process.env.RAILKIT_API_KEY;
-
-  if (!apiKey) {
-    return res.status(500).json({
-      success: false,
-      message: "RAILKIT_API_KEY is not configured."
-    });
-  }
-
-  try {
-    configure(apiKey);
-
-    const result = await checkPNRStatus(pnr);
-
-    return res.status(200).json(result);
-  } catch (error) {
-    console.error("RailKit Error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: error?.message || "RailKit request failed."
-    });
-  }
-}
+};
