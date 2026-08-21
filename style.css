@@ -767,4 +767,18 @@ flex-wrap:wrap
 flex:1
 }
 
+  }
+.status-confirmed{
+background:#dcfce7!important;
+color:#15803d!important;
+}
+
+.status-rac{
+background:#fef3c7!important;
+color:#a16207!important;
+}
+
+.status-wl{
+background:#fee2e2!important;
+color:#dc2626!important;
 }
