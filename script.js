@@ -4,220 +4,218 @@ const resultBox = document.getElementById("result");
 const errorBox = document.getElementById("error");
 const loading = document.getElementById("loading");
 
-function hide(el) {
-  if (el) el.classList.add("hidden");
-}
-
-function show(el) {
-  if (el) el.classList.remove("hidden");
-}
-
-function escapeHTML(value) {
+function esc(value){
   return String(value ?? "-")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
 }
 
-function getStatusClass(status = "") {
-  const s = String(status).toUpperCase();
-
-  if (s.includes("CNF") || s.includes("CONFIRM")) return "confirmed";
-  if (s.includes("RAC")) return "rac";
-  if (s.includes("WL") || s.includes("WAIT")) return "waiting";
-
-  return "";
-}
-
-function getStatusText(data) {
-  return (
-    data?.status ||
-    data?.pnrStatus ||
-    data?.bookingStatus ||
-    data?.currentStatus ||
-    data?.message ||
-    "Status Available"
-  );
-}
-
-function findValue(obj, keys) {
-  for (const key of keys) {
-    if (obj && obj[key] !== undefined && obj[key] !== null) {
+function value(obj, keys){
+  for(const key of keys){
+    if(obj && obj[key] !== undefined && obj[key] !== null && obj[key] !== ""){
       return obj[key];
     }
   }
   return "-";
 }
 
-function renderResult(data, pnr) {
-  const status = getStatusText(data);
-  const statusClass = getStatusClass(status);
+function statusClass(status){
+  const s = String(status).toUpperCase();
 
-  const trainName = findValue(data, [
-    "trainName",
-    "train_name",
-    "train"
-  ]);
+  if(s.includes("CNF") || s.includes("CONFIRM"))
+    return "confirmed";
 
-  const trainNumber = findValue(data, [
-    "trainNumber",
-    "train_number",
-    "trainNo"
-  ]);
+  if(s.includes("RAC"))
+    return "rac";
 
-  const from = findValue(data, [
-    "from",
-    "source",
-    "boardingStation",
-    "fromStation"
-  ]);
+  if(s.includes("WL") || s.includes("WAIT"))
+    return "waiting";
 
-  const to = findValue(data, [
-    "to",
-    "destination",
-    "destinationStation",
-    "toStation"
-  ]);
+  return "";
+}
 
-  const date = findValue(data, [
-    "journeyDate",
-    "journey_date",
-    "date",
-    "doj"
-  ]);
+function flatten(data){
 
-  const quota = findValue(data, [
-    "quota",
-    "bookingQuota"
-  ]);
-
-  let passengers = [];
-
-  if (Array.isArray(data?.passengers)) {
-    passengers = data.passengers;
-  } else if (Array.isArray(data?.data?.passengers)) {
-    passengers = data.data.passengers;
+  if(data?.data && typeof data.data === "object"){
+    return {...data,...data.data};
   }
 
-  const main = data?.data && typeof data.data === "object"
-    ? { ...data, ...data.data }
-    : data;
+  return data || {};
+}
 
-  const finalTrainName = findValue(main, [
-    "trainName",
-    "train_name",
-    "train"
-  ]);
+function getPassengers(data){
 
-  const finalTrainNumber = findValue(main, [
-    "trainNumber",
-    "train_number",
-    "trainNo"
-  ]);
+  if(Array.isArray(data?.passengers))
+    return data.passengers;
 
-  const finalFrom = findValue(main, [
-    "from",
-    "source",
-    "boardingStation",
-    "fromStation"
-  ]);
+  if(Array.isArray(data?.passenger))
+    return data.passenger;
 
-  const finalTo = findValue(main, [
-    "to",
-    "destination",
-    "destinationStation",
-    "toStation"
-  ]);
+  if(Array.isArray(data?.booking?.passengers))
+    return data.booking.passengers;
 
-  const finalDate = findValue(main, [
-    "journeyDate",
-    "journey_date",
-    "date",
-    "doj"
-  ]);
+  return [];
+}
 
-  const finalQuota = findValue(main, [
-    "quota",
-    "bookingQuota"
-  ]);
+function renderResult(raw,pnr){
 
-  if (Array.isArray(main?.passengers)) {
-    passengers = main.passengers;
-  }
+  const data = flatten(raw);
+
+  const train = data.train || {};
+  const journey = data.journey || {};
+  const booking = data.booking || {};
+
+  const trainName =
+    value(data,["trainName","train_name"]) !== "-"
+      ? value(data,["trainName","train_name"])
+      : value(train,["name","trainName"]);
+
+  const trainNumber =
+    value(data,["trainNumber","train_number","trainNo"]) !== "-"
+      ? value(data,["trainNumber","train_number","trainNo"])
+      : value(train,["number","trainNumber","trainNo"]);
+
+  const from =
+    value(data,["from","source","fromStation","boardingStation"]) !== "-"
+      ? value(data,["from","source","fromStation","boardingStation"])
+      : value(journey,["from","source","boardingStation"]);
+
+  const to =
+    value(data,["to","destination","toStation","destinationStation"]) !== "-"
+      ? value(data,["to","destination","toStation","destinationStation"])
+      : value(journey,["to","destination","destinationStation"]);
+
+  const date =
+    value(data,["journeyDate","journey_date","date","doj"]) !== "-"
+      ? value(data,["journeyDate","journey_date","date","doj"])
+      : value(journey,["date","journeyDate","doj"]);
+
+  const quota =
+    value(data,["quota","bookingQuota"]) !== "-"
+      ? value(data,["quota","bookingQuota"])
+      : value(booking,["quota","bookingQuota"]);
+
+  const cls =
+    value(data,["class","travelClass"]) !== "-"
+      ? value(data,["class","travelClass"])
+      : value(booking,["class","travelClass"]);
+
+  const fare =
+    value(data,["fare","totalFare","amount"]) !== "-"
+      ? value(data,["fare","totalFare","amount"])
+      : value(booking,["fare","totalFare","amount"]);
+
+  const overallStatus =
+    value(data,[
+      "status",
+      "pnrStatus",
+      "currentStatus",
+      "bookingStatus"
+    ]);
+
+  const passengers = getPassengers(data);
 
   const passengerHTML = passengers.length
-    ? passengers.map((p, i) => {
+    ? passengers.map((p,i)=>{
 
-        const booking = findValue(p, [
-          "booking",
+        const current = value(p,[
+          "currentStatus",
+          "current",
+          "current_status",
+          "status"
+        ]);
+
+        const booked = value(p,[
           "bookingStatus",
+          "booking",
           "booking_status"
         ]);
 
-        const current = findValue(p, [
-          "current",
-          "currentStatus",
-          "current_status"
-        ]);
-
-        const passengerName = findValue(p, [
+        const name = value(p,[
           "name",
           "passengerName"
         ]);
 
-        const cls = getStatusClass(current);
+        const coach = value(p,[
+          "coach",
+          "coachNumber"
+        ]);
+
+        const berth = value(p,[
+          "berth",
+          "berthNumber",
+          "seat"
+        ]);
 
         return `
           <div class="passenger">
+
             <div>
               <strong>
-                Passenger ${i + 1}${passengerName !== "-" ? ` — ${escapeHTML(passengerName)}` : ""}
+                Passenger ${i+1}${name !== "-" ? " — "+esc(name) : ""}
               </strong>
-              <span>Booking: ${escapeHTML(booking)}</span>
-              <span>Current: ${escapeHTML(current)}</span>
+
+              <small>
+                Booking: ${esc(booked)}
+              </small>
+
+              <small>
+                Current: ${esc(current)}
+              </small>
+
+              ${
+                coach !== "-" || berth !== "-"
+                ? `<small>Seat: ${esc(coach)} / ${esc(berth)}</small>`
+                : ""
+              }
             </div>
 
-            <div class="passenger-status ${cls}">
-              ${escapeHTML(current)}
+            <div class="passenger-status ${statusClass(current)}">
+              ${esc(current)}
             </div>
+
           </div>
         `;
       }).join("")
     : `
       <div class="passenger">
         <div>
-          <strong>Passenger Information</strong>
-          <span>Passenger details were returned by the railway service.</span>
+          <strong>Passenger Details</strong>
+          <small>Passenger information is not available in the response.</small>
         </div>
       </div>
     `;
 
   resultBox.innerHTML = `
+
     <div class="result-head">
+
       <div>
-        <span>PNR RESULT</span>
-        <h2>PNR ${escapeHTML(pnr)}</h2>
+        <small>PNR RESULT</small>
+        <h3>PNR ${esc(pnr)}</h3>
       </div>
 
-      <div class="status-badge ${statusClass}">
-        ${escapeHTML(status)}
+      <div class="status ${statusClass(overallStatus)}">
+        ${esc(overallStatus)}
       </div>
+
     </div>
 
     <div class="journey">
 
       <div class="station">
         <small>FROM</small>
-        <strong>${escapeHTML(finalFrom)}</strong>
+        <strong>${esc(from)}</strong>
       </div>
 
-      <div class="journey-line">→</div>
+      <div class="arrow">→</div>
 
       <div class="station right">
         <small>TO</small>
-        <strong>${escapeHTML(finalTo)}</strong>
+        <strong>${esc(to)}</strong>
       </div>
 
     </div>
@@ -226,161 +224,135 @@ function renderResult(data, pnr) {
 
       <div class="info">
         <small>TRAIN</small>
-        <strong>${escapeHTML(finalTrainName)}</strong>
+        <strong>${esc(trainName)}</strong>
       </div>
 
       <div class="info">
         <small>TRAIN NUMBER</small>
-        <strong>${escapeHTML(finalTrainNumber)}</strong>
+        <strong>${esc(trainNumber)}</strong>
       </div>
 
       <div class="info">
         <small>JOURNEY DATE</small>
-        <strong>${escapeHTML(finalDate)}</strong>
+        <strong>${esc(date)}</strong>
+      </div>
+
+      <div class="info">
+        <small>CLASS</small>
+        <strong>${esc(cls)}</strong>
       </div>
 
       <div class="info">
         <small>QUOTA</small>
-        <strong>${escapeHTML(finalQuota)}</strong>
+        <strong>${esc(quota)}</strong>
       </div>
 
       <div class="info">
-        <small>PNR NUMBER</small>
-        <strong>${escapeHTML(pnr)}</strong>
-      </div>
-
-      <div class="info">
-        <small>STATUS</small>
-        <strong>${escapeHTML(status)}</strong>
+        <small>FARE</small>
+        <strong>${esc(fare)}</strong>
       </div>
 
     </div>
 
-    <div class="passenger-section">
+    <div class="passengers">
 
-      <div class="section-title">
-        <h3>Passenger Details</h3>
-        <span>${passengers.length || 0} Passenger</span>
-      </div>
+      <h4>
+        Passenger Details
+      </h4>
 
       ${passengerHTML}
 
     </div>
   `;
 
-  show(resultBox);
+  resultBox.classList.remove("hidden");
 
   resultBox.scrollIntoView({
-    behavior: "smooth",
-    block: "start"
+    behavior:"smooth",
+    block:"nearest"
   });
 }
 
+async function checkPNR(){
 
-async function checkPNR() {
+  const pnr = pnrInput.value.trim();
 
-  const pnr = pnrInput?.value.trim();
+  errorBox.classList.add("hidden");
+  resultBox.classList.add("hidden");
 
-  hide(errorBox);
-  hide(resultBox);
-
-  if (!pnr) {
-    errorBox.textContent = "Please enter your 10-digit PNR number.";
-    show(errorBox);
-    return;
-  }
-
-  if (!/^\d{10}$/.test(pnr)) {
-    errorBox.textContent = "PNR number must contain exactly 10 digits.";
-    show(errorBox);
+  if(!/^\d{10}$/.test(pnr)){
+    errorBox.textContent =
+      "Please enter a valid 10-digit PNR number.";
+    errorBox.classList.remove("hidden");
     return;
   }
 
   checkBtn.disabled = true;
+  loading.classList.remove("hidden");
 
-  if (loading) {
-    show(loading);
-  }
-
-  try {
+  try{
 
     const response = await fetch(
       `/api/pnr?pnr=${encodeURIComponent(pnr)}`,
       {
-        method: "GET",
-        headers: {
-          "Accept": "application/json"
+        method:"GET",
+        headers:{
+          "Accept":"application/json"
         },
-        cache: "no-store"
+        cache:"no-store"
       }
     );
 
-    const contentType =
-      response.headers.get("content-type") || "";
+    const text = await response.text();
 
     let data;
 
-    if (contentType.includes("application/json")) {
-      data = await response.json();
-    } else {
-
-      const text = await response.text();
-
+    try{
+      data = JSON.parse(text);
+    }catch{
       throw new Error(
-        text || `Server returned HTTP ${response.status}`
+        "Server returned an invalid response."
       );
     }
 
-    if (!response.ok || data?.success === false) {
-
+    if(!response.ok || data?.success === false){
       throw new Error(
         data?.message ||
         data?.error ||
-        `PNR request failed (${response.status})`
+        "PNR status could not be fetched."
       );
     }
 
-    renderResult(data, pnr);
+    renderResult(data,pnr);
 
-  } catch (error) {
+  }catch(error){
 
-    console.error("AINEX PNR Error:", error);
+    console.error("AINEX PNR:",error);
 
     errorBox.textContent =
-      error?.message ||
-      "PNR status fetch nahi ho saka. Please try again.";
+      error.message ||
+      "Unable to fetch PNR status.";
 
-    show(errorBox);
+    errorBox.classList.remove("hidden");
 
-  } finally {
+  }finally{
 
     checkBtn.disabled = false;
+    loading.classList.add("hidden");
 
-    if (loading) {
-      hide(loading);
-    }
   }
 }
 
+checkBtn.addEventListener("click",checkPNR);
 
-/* Button */
-if (checkBtn) {
-  checkBtn.addEventListener("click", checkPNR);
-}
+pnrInput.addEventListener("input",()=>{
+  pnrInput.value =
+    pnrInput.value.replace(/\D/g,"").slice(0,10);
+});
 
-
-/* Enter key */
-if (pnrInput) {
-  pnrInput.addEventListener("keydown", event => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      checkPNR();
-    }
-  });
-
-  pnrInput.addEventListener("input", () => {
-    pnrInput.value = pnrInput.value
-      .replace(/\D/g, "")
-      .slice(0, 10);
-  });
-}
+pnrInput.addEventListener("keydown",(e)=>{
+  if(e.key === "Enter"){
+    e.preventDefault();
+    checkPNR();
+  }
+});
