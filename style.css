@@ -498,7 +498,6 @@ form label{
 
 
 /* FOOTER */
-
 footer{
   background:#14213d;
   color:#fff;
@@ -507,6 +506,7 @@ footer{
   display:flex;
   flex-direction:column;
   gap:6px;
+  margin-top:150px;
 }
 
 footer strong{
