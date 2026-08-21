@@ -273,7 +273,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
         <div class="privacy">
-          🔒 Your PNR is used only to fetch the current status.
         </div>
 
       </div>
