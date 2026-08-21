@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const $ = id => document.getElementById(id);
 
   /* =========================
-     STATION DATA
+     STATIONS
   ========================= */
 
   const stations = [
@@ -24,21 +24,25 @@ document.addEventListener("DOMContentLoaded", () => {
     ["PNBE","Patna Jn","Bihar"],
     ["BJU","Barauni Jn","Bihar"],
     ["DLI","Delhi Jn","Delhi"],
-    ["MUM","Mumbai Central","Maharashtra"]
+    ["MUM","Mumbai Central","Maharashtra"],
+    ["BDTS","Bandra Terminus","Maharashtra"],
+    ["NDLS","New Delhi","Delhi"],
+    ["SBC","KSR Bengaluru","Karnataka"],
+    ["MAS","Chennai Central","Tamil Nadu"],
+    ["HWH","Howrah Jn","West Bengal"],
+    ["RNC","Ranchi","Jharkhand"]
   ];
-
 
   /* =========================
      DATE
   ========================= */
 
-  const today = new Date();
+  const now = new Date();
 
-  const todayValue =
-    today.getFullYear() + "-" +
-    String(today.getMonth() + 1).padStart(2,"0") + "-" +
-    String(today.getDate()).padStart(2,"0");
-
+  const today =
+    now.getFullYear() + "-" +
+    String(now.getMonth() + 1).padStart(2, "0") + "-" +
+    String(now.getDate()).padStart(2, "0");
 
   [
     "liveDate",
@@ -47,15 +51,76 @@ document.addEventListener("DOMContentLoaded", () => {
     "searchDate",
     "historyDate"
   ].forEach(id => {
-
-    const el = $(id);
-
-    if (el && !el.value) {
-      el.value = todayValue;
+    if ($(id) && !$(id).value) {
+      $(id).value = today;
     }
-
   });
 
+  /* =========================
+     HELPERS
+  ========================= */
+
+  function esc(v) {
+    if (v === undefined || v === null || v === "") {
+      return "-";
+    }
+
+    return String(v)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function pick(obj, keys, fallback = "-") {
+    if (!obj) return fallback;
+
+    for (const key of keys) {
+      const value = obj[key];
+
+      if (
+        value !== undefined &&
+        value !== null &&
+        value !== ""
+      ) {
+        return value;
+      }
+    }
+
+    return fallback;
+  }
+
+  function loading(text) {
+    return `
+      <div class="loading">
+        <div class="loader"></div>
+        <strong>${esc(text)}</strong>
+      </div>
+    `;
+  }
+
+  function show(el, html) {
+    if (el) el.innerHTML = html;
+  }
+
+  function errorBox(message) {
+    return `
+      <div class="error-box">
+        ❌ ${esc(message)}
+      </div>
+    `;
+  }
+
+  function dateForAPI(date) {
+    if (!date) return "";
+
+    const m = date.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+    if (!m) return date;
+
+    return `${m[3]}-${m[2]}-${m[1]}`;
+  }
 
   /* =========================
      API
@@ -68,11 +133,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const response = await fetch(
       `/api/railway?${query.toString()}`,
       {
-        method:"GET",
-        headers:{
-          "Accept":"application/json"
+        method: "GET",
+        headers: {
+          Accept: "application/json"
         },
-        cache:"no-store"
+        cache: "no-store"
       }
     );
 
@@ -89,144 +154,59 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (!response.ok || data?.success === false) {
-
       throw new Error(
         data?.message ||
         data?.error ||
-        "Railway request failed."
+        "Railway API request failed."
       );
-
     }
 
     return data;
   }
 
-
-  /* =========================
-     HELPERS
-  ========================= */
-
-  function esc(value) {
-
-    if (
-      value === null ||
-      value === undefined
-    ) {
-      return "-";
-    }
-
-    return String(value)
-      .replace(/&/g,"&amp;")
-      .replace(/</g,"&lt;")
-      .replace(/>/g,"&gt;")
-      .replace(/"/g,"&quot;")
-      .replace(/'/g,"&#039;");
-  }
-
-
-  function value(obj,...keys) {
-
-    for (const key of keys) {
-
-      const v = obj?.[key];
-
-      if (
-        v !== undefined &&
-        v !== null &&
-        v !== ""
-      ) {
-        return v;
-      }
-
-    }
-
-    return "-";
-  }
-
-
-  function loading(text) {
-
-    return `
-      <div class="loading">
-        <div class="loader"></div>
-        <strong>${esc(text)}</strong>
-      </div>
-    `;
-
-  }
-
-
-  function error(message) {
-
-    return `
-      <div class="error-box">
-        ❌ ${esc(message)}
-      </div>
-    `;
-
-  }
-
-
-  function show(box,html) {
-
-    if (box) {
-      box.innerHTML = html;
-    }
-
-  }
-
-
   /* =========================
      STATION AUTOCOMPLETE
   ========================= */
 
-  function setupStationInput(inputId,suggestionId) {
+  function setupStation(inputId, boxId) {
 
     const input = $(inputId);
-    const box = $(suggestionId);
+    const box = $(boxId);
 
     if (!input || !box) return;
 
-    input.addEventListener("input",() => {
+    input.addEventListener("input", () => {
 
-      const query =
+      const q =
         input.value.trim().toUpperCase();
 
-      box.innerHTML = "";
+      input.dataset.code = "";
 
-      if (!query) {
-
+      if (!q) {
+        box.innerHTML = "";
         box.style.display = "none";
         return;
-
       }
-
 
       const matches = stations
         .filter(s =>
-          s[0].includes(query) ||
-          s[1].toUpperCase().includes(query)
+          s[0].includes(q) ||
+          s[1].toUpperCase().includes(q)
         )
-        .slice(0,7);
-
+        .slice(0, 8);
 
       if (!matches.length) {
-
+        box.innerHTML = "";
         box.style.display = "none";
         return;
-
       }
 
-
-      matches.forEach(s => {
-
-        const item =
-          document.createElement("div");
-
-        item.className =
-          "station-suggestion";
-
-        item.innerHTML = `
+      box.innerHTML = matches.map(s => `
+        <div
+          class="station-suggestion"
+          data-code="${esc(s[0])}"
+          data-name="${esc(s[1])}"
+        >
           <div class="station-suggestion-icon">
             🚉
           </div>
@@ -235,67 +215,54 @@ document.addEventListener("DOMContentLoaded", () => {
             <strong>${esc(s[1])}</strong>
             <span>${esc(s[0])} • ${esc(s[2])}</span>
           </div>
-        `;
-
-
-        item.addEventListener("click",() => {
-
-          input.value =
-            `${s[1]} (${s[0]})`;
-
-          input.dataset.code = s[0];
-
-          box.innerHTML = "";
-          box.style.display = "none";
-
-        });
-
-
-        box.appendChild(item);
-
-      });
-
+        </div>
+      `).join("");
 
       box.style.display = "block";
 
+      box.querySelectorAll(
+        ".station-suggestion"
+      ).forEach(item => {
+
+        item.addEventListener("click", () => {
+
+          input.value =
+            `${item.dataset.name} (${item.dataset.code})`;
+
+          input.dataset.code =
+            item.dataset.code;
+
+          box.innerHTML = "";
+          box.style.display = "none";
+        });
+
+      });
+
     });
 
-
-    input.addEventListener("keydown",e => {
+    input.addEventListener("keydown", e => {
 
       if (e.key === "Escape") {
-
         box.innerHTML = "";
         box.style.display = "none";
-
       }
 
     });
-
   }
 
-
   [
-    ["fromStation","fromSuggestions"],
-    ["toStation","toSuggestions"],
-    ["seatFrom","seatFromSuggestions"],
-    ["seatTo","seatToSuggestions"],
-    ["fareFrom","fareFromSuggestions"],
-    ["fareTo","fareToSuggestions"],
-    ["stationCode","stationSuggestions"]
-  ].forEach(item => {
+    ["fromStation", "fromSuggestions"],
+    ["toStation", "toSuggestions"],
+    ["seatFrom", "seatFromSuggestions"],
+    ["seatTo", "seatToSuggestions"],
+    ["fareFrom", "fareFromSuggestions"],
+    ["fareTo", "fareToSuggestions"],
+    ["stationCode", "stationSuggestions"]
+  ].forEach(x => setupStation(x[0], x[1]));
 
-    setupStationInput(
-      item[0],
-      item[1]
-    );
+  function stationCode(id) {
 
-  });
-
-
-  function getStationCode(inputId) {
-
-    const input = $(inputId);
+    const input = $(id);
 
     if (!input) return "";
 
@@ -306,24 +273,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const text =
       input.value.trim().toUpperCase();
 
-    const match =
-      stations.find(s =>
-        s[0] === text
+    const found =
+      stations.find(
+        s => s[0] === text
       );
 
-    if (match) return match[0];
+    if (found) return found[0];
 
-    const codeMatch =
+    const match =
       text.match(/\(([A-Z]{2,5})\)/);
 
-    if (codeMatch) {
-      return codeMatch[1];
-    }
-
-    return text;
-
+    return match
+      ? match[1]
+      : text;
   }
-
 
   /* =========================
      PNR
@@ -337,66 +300,55 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const pnr =
         $("pnr").value
-        .replace(/\D/g,"")
-        .slice(0,10);
+          .replace(/\D/g, "")
+          .slice(0, 10);
 
       const box = $("result");
-      const btn = $("checkBtn");
+      const button = $("checkBtn");
 
       if (!/^\d{10}$/.test(pnr)) {
-
         show(
           box,
-          error("Please enter valid 10 digit PNR.")
+          errorBox("10 digit valid PNR enter karo.")
         );
-
         return;
-
       }
 
-
-      btn.disabled = true;
-      btn.textContent = "⏳ CHECKING...";
+      button.disabled = true;
+      button.textContent = "⏳ CHECKING...";
 
       show(
         box,
-        loading("Checking PNR status...")
+        loading("PNR status check ho raha hai...")
       );
-
 
       try {
 
-        const result =
-          await callAPI({
-            action:"pnr",
-            pnr
-          });
+        const result = await callAPI({
+          action: "pnr",
+          pnr
+        });
 
         renderPNR(
           result?.data || result
         );
 
-      } catch(err) {
+      } catch (err) {
 
         show(
           box,
-          error(err.message)
+          errorBox(err.message)
         );
 
+      } finally {
+
+        button.disabled = false;
+        button.textContent =
+          "🔎 CHECK PNR STATUS";
+
       }
-
-
-      btn.disabled = false;
-      btn.textContent =
-        "🔎 CHECK PNR STATUS";
-
     }
   );
-
-
-  /* =========================
-     PNR RESULT
-  ========================= */
 
   function renderPNR(d) {
 
@@ -414,100 +366,6 @@ document.addEventListener("DOMContentLoaded", () => {
         ? d.passengers
         : [];
 
-
-    const passengersHTML =
-      passengers.map((p,i) => {
-
-        const booking =
-          p?.booking || {};
-
-        const current =
-          p?.current || {};
-
-
-        const status =
-          value(
-            current,
-            "details",
-            "status"
-          );
-
-
-        return `
-          <div class="passenger">
-
-            <div class="passenger-top">
-
-              <b>
-                Passenger ${i + 1}
-              </b>
-
-              <span class="unknown">
-                ${esc(status)}
-              </span>
-
-            </div>
-
-
-            <div class="passenger-info">
-
-              <div>
-                <small>BOOKING STATUS</small>
-                <b>
-                  ${esc(
-                    value(
-                      booking,
-                      "details",
-                      "status"
-                    )
-                  )}
-                </b>
-              </div>
-
-
-              <div>
-                <small>CURRENT STATUS</small>
-                <b>
-                  ${esc(status)}
-                </b>
-              </div>
-
-
-              <div>
-                <small>COACH</small>
-                <b>
-                  ${esc(
-                    value(
-                      current,
-                      "coach",
-                      "coachNumber"
-                    )
-                  )}
-                </b>
-              </div>
-
-
-              <div>
-                <small>SEAT / BERTH</small>
-                <b>
-                  ${esc(
-                    value(
-                      current,
-                      "berthNo",
-                      "berth"
-                    )
-                  )}
-                </b>
-              </div>
-
-            </div>
-
-          </div>
-        `;
-
-      }).join("");
-
-
     show(
       $("result"),
       `
@@ -518,66 +376,54 @@ document.addEventListener("DOMContentLoaded", () => {
             <small>PNR RESULT</small>
 
             <h2>
-              PNR ${esc(d?.pnr)}
+              PNR ${esc(
+                pick(d, ["pnr"])
+              )}
             </h2>
 
             <p>
               ${esc(
-                value(
+                pick(
                   d,
-                  "status",
-                  "message"
+                  ["status", "message"],
+                  "PNR Status"
                 )
               )}
             </p>
 
           </div>
 
-
           <div class="route">
 
             <div>
-
               <small>FROM</small>
 
               <b>
                 ${esc(
-                  value(
+                  pick(
                     source,
-                    "name",
-                    "stationName",
-                    "code"
+                    ["name", "stationName", "code"]
                   )
                 )}
               </b>
-
             </div>
 
-
-            <div class="arrow">
-              →
-            </div>
-
+            <div class="arrow">→</div>
 
             <div class="right">
-
               <small>TO</small>
 
               <b>
                 ${esc(
-                  value(
+                  pick(
                     destination,
-                    "name",
-                    "stationName",
-                    "code"
+                    ["name", "stationName", "code"]
                   )
                 )}
               </b>
-
             </div>
 
           </div>
-
 
           <div class="info-grid">
 
@@ -585,60 +431,58 @@ document.addEventListener("DOMContentLoaded", () => {
               <small>TRAIN</small>
               <b>
                 ${esc(
-                  value(
+                  pick(
                     train,
-                    "name",
-                    "trainName"
+                    ["name", "trainName"]
                   )
                 )}
               </b>
             </div>
-
 
             <div>
               <small>TRAIN NUMBER</small>
               <b>
                 ${esc(
-                  value(
+                  pick(
                     train,
-                    "number",
-                    "trainNumber",
-                    "trainNo"
+                    [
+                      "number",
+                      "trainNumber",
+                      "trainNo"
+                    ]
                   )
                 )}
               </b>
             </div>
-
 
             <div>
               <small>JOURNEY DATE</small>
               <b>
                 ${esc(
-                  value(
+                  pick(
                     journey,
-                    "date",
-                    "dateOfJourney"
+                    [
+                      "date",
+                      "dateOfJourney"
+                    ]
                   )
                 )}
               </b>
             </div>
-
 
             <div>
               <small>CLASS</small>
               <b>
                 ${esc(
-                  value(
+                  pick(
                     journey,
-                    "class"
+                    ["class"]
                   )
                 )}
               </b>
             </div>
 
-
           </div>
-
 
           ${
             passengers.length
@@ -648,12 +492,120 @@ document.addEventListener("DOMContentLoaded", () => {
                 </h3>
 
                 <div class="passenger-list">
-                  ${passengersHTML}
+
+                  ${passengers.map((p, i) => {
+
+                    const booking =
+                      p?.booking || {};
+
+                    const current =
+                      p?.current || {};
+
+                    return `
+                      <div class="passenger">
+
+                        <div class="passenger-top">
+
+                          <b>
+                            Passenger ${i + 1}
+                          </b>
+
+                          <span class="unknown">
+                            ${esc(
+                              pick(
+                                current,
+                                [
+                                  "status",
+                                  "details"
+                                ]
+                              )
+                            )}
+                          </span>
+
+                        </div>
+
+                        <div class="passenger-info">
+
+                          <div>
+                            <small>
+                              BOOKING STATUS
+                            </small>
+
+                            <b>
+                              ${esc(
+                                pick(
+                                  booking,
+                                  [
+                                    "status",
+                                    "details"
+                                  ]
+                                )
+                              )}
+                            </b>
+                          </div>
+
+                          <div>
+                            <small>
+                              CURRENT STATUS
+                            </small>
+
+                            <b>
+                              ${esc(
+                                pick(
+                                  current,
+                                  [
+                                    "status",
+                                    "details"
+                                  ]
+                                )
+                              )}
+                            </b>
+                          </div>
+
+                          <div>
+                            <small>COACH</small>
+
+                            <b>
+                              ${esc(
+                                pick(
+                                  current,
+                                  [
+                                    "coach",
+                                    "coachNumber"
+                                  ]
+                                )
+                              )}
+                            </b>
+                          </div>
+
+                          <div>
+                            <small>SEAT / BERTH</small>
+
+                            <b>
+                              ${esc(
+                                pick(
+                                  current,
+                                  [
+                                    "berthNo",
+                                    "berth",
+                                    "seat"
+                                  ]
+                                )
+                              )}
+                            </b>
+                          </div>
+
+                        </div>
+
+                      </div>
+                    `;
+
+                  }).join("")}
+
                 </div>
               `
               : ""
           }
-
 
           <div class="privacy">
             🔒 Railway information fetched securely.
@@ -662,9 +614,7 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
       `
     );
-
   }
-
 
   /* =========================
      LIVE TRAIN
@@ -685,68 +635,56 @@ document.addEventListener("DOMContentLoaded", () => {
       const box =
         $("liveResult");
 
-
       if (!/^\d{5}$/.test(trainNo)) {
-
         show(
           box,
-          error("Enter valid 5 digit train number.")
+          errorBox(
+            "5 digit train number enter karo."
+          )
         );
-
         return;
-
       }
-
 
       show(
         box,
-        loading("Fetching live train status...")
+        loading("Live train status fetch ho raha hai...")
       );
-
 
       try {
 
-        const result =
-          await callAPI({
-            action:"live",
-            trainNo,
-            date
-          });
+        const result = await callAPI({
+          action: "live",
+          trainNo,
+          date: dateForAPI(date)
+        });
 
-
-        const d =
-          result?.data || result;
-
-
-        renderLiveTrain(
+        renderLive(
           box,
-          d,
-          trainNo
+          result
         );
 
-
-      } catch(err) {
+      } catch (err) {
 
         show(
           box,
-          error(err.message)
+          errorBox(err.message)
         );
 
       }
-
     }
   );
 
+  function renderLive(box, result) {
 
-  function renderLiveTrain(box,d,trainNo) {
+    const d =
+      result?.data ||
+      result;
 
-    const timeline =
-      Array.isArray(d?.timeline)
-        ? d.timeline
-        : Array.isArray(d?.stations)
-        ? d.stations
-        : [];
-
+    const list =
+      d?.stations ||
+      d?.timeline ||
+      d?.route ||
+      [];
 
     show(
       box,
@@ -758,10 +696,9 @@ document.addEventListener("DOMContentLoaded", () => {
           <p>
             <b>Train:</b>
             ${esc(
-              value(
+              pick(
                 d,
-                "trainName",
-                "name"
+                ["train_name", "trainName", "name"]
               )
             )}
           </p>
@@ -769,444 +706,94 @@ document.addEventListener("DOMContentLoaded", () => {
           <p>
             <b>Train Number:</b>
             ${esc(
-              value(
+              pick(
                 d,
-                "trainNo",
-                "trainNumber"
-              ) !== "-"
-                ? value(d,"trainNo","trainNumber")
-                : trainNo
-            )}
-          </p>
-
-          <p>
-            <b>Status:</b>
-            ${esc(
-              value(
-                d,
-                "statusNote",
-                "status",
-                "message"
+                [
+                  "train_no",
+                  "trainNo",
+                  "trainNumber"
+                ]
               )
             )}
           </p>
 
+          <p>
+            <b>Current Status:</b>
+            ${esc(
+              pick(
+                d,
+                [
+                  "status",
+                  "status_note",
+                  "statusNote",
+                  "message"
+                ]
+              )
+            )}
+          </p>
 
           ${
-            timeline.length
+            Array.isArray(list) && list.length
               ? `
                 <h4>Station Updates</h4>
 
                 <div class="train-list">
 
-                  ${timeline.map(t => `
+                  ${list.map(s => `
 
                     <div class="train-item">
 
                       <strong>
                         🚉 ${esc(
-                          value(
-                            t,
-                            "stationName",
-                            "name",
-                            "station"
+                          pick(
+                            s,
+                            [
+                              "station_name",
+                              "stationName",
+                              "name",
+                              "station"
+                            ]
                           )
                         )}
                       </strong>
 
                       <p>
-                        Arrival:
+                        🟢 Arrival:
                         ${esc(
-                          value(
-                            t?.arrival || {},
-                            "actual",
-                            "scheduled",
-                            "time"
+                          pick(
+                            s,
+                            [
+                              "arrival",
+                              "arrival_time",
+                              "actual_arrival"
+                            ]
                           )
                         )}
                       </p>
 
                       <p>
-                        Departure:
+                        🔵 Departure:
                         ${esc(
-                          value(
-                            t?.departure || {},
-                            "actual",
-                            "scheduled",
-                            "time"
+                          pick(
+                            s,
+                            [
+                              "departure",
+                              "departure_time",
+                              "actual_departure"
+                            ]
                           )
                         )}
                       </p>
-
-                    </div>
-
-                  `).join("")}
-
-                </div>
-              `
-              : ""
-          }
-
-        </div>
-      `
-    );
-
-  }
-
-
-  /* =========================
-     TRAIN SEARCH
-  ========================= */
-
-  $("searchForm")?.addEventListener(
-    "submit",
-    async e => {
-
-      e.preventDefault();
-
-      const from =
-        getStationCode("fromStation");
-
-      const to =
-        getStationCode("toStation");
-
-      const date =
-        $("searchDate").value;
-
-      const box =
-        $("searchResult");
-
-
-      if (!from || !to) {
-
-        show(
-          box,
-          error("From aur To station select karein.")
-        );
-
-        return;
-
-      }
-
-
-      show(
-        box,
-        loading("Searching trains...")
-      );
-
-
-      try {
-
-        const result =
-          await callAPI({
-            action:"search",
-            from,
-            to
-          });
-
-
-        renderTrainSearch(
-          box,
-          result?.data || result
-        );
-
-
-      } catch(err) {
-
-        show(
-          box,
-          error(err.message)
-        );
-
-      }
-
-    }
-  );
-
-
-  function renderTrainSearch(box,d) {
-
-    const trains =
-      Array.isArray(d)
-        ? d
-        : Array.isArray(d?.trains)
-        ? d.trains
-        : [];
-
-
-    if (!trains.length) {
-
-      show(
-        box,
-        `
-          <div class="data-box">
-            <h3>🔎 Train Search</h3>
-            <p>No train data available.</p>
-          </div>
-        `
-      );
-
-      return;
-
-    }
-
-
-    show(
-      box,
-      `
-        <div class="data-box">
-
-          <h3>
-            🚆 ${trains.length} Trains Found
-          </h3>
-
-          <div class="train-list">
-
-            ${trains.map(t => `
-
-              <div class="train-item">
-
-                <strong>
-                  ${esc(
-                    value(
-                      t,
-                      "trainNo",
-                      "trainNumber",
-                      "number"
-                    )
-                  )}
-                  —
-                  ${esc(
-                    value(
-                      t,
-                      "trainName",
-                      "name"
-                    )
-                  )}
-                </strong>
-
-
-                <p>
-                  🟢 Departure:
-                  ${esc(
-                    value(
-                      t,
-                      "departure",
-                      "departureTime"
-                    )
-                  )}
-                </p>
-
-
-                <p>
-                  🔴 Arrival:
-                  ${esc(
-                    value(
-                      t,
-                      "arrival",
-                      "arrivalTime"
-                    )
-                  )}
-                </p>
-
-
-                <p>
-                  📅 Running:
-                  ${esc(
-                    value(
-                      t,
-                      "runningDays",
-                      "running_days"
-                    )
-                  )}
-                </p>
-
-              </div>
-
-            `).join("")}
-
-          </div>
-
-        </div>
-      `
-    );
-
-  }
-
-
-  /* =========================
-     LIVE STATION
-  ========================= */
-
-  $("stationForm")?.addEventListener(
-    "submit",
-    async e => {
-
-      e.preventDefault();
-
-      const station =
-        getStationCode("stationCode");
-
-      const hours =
-        $("stationHours").value;
-
-      const box =
-        $("stationResult");
-
-
-      if (!station) {
-
-        show(
-          box,
-          error("Station select karein.")
-        );
-
-        return;
-
-      }
-
-
-      show(
-        box,
-        loading("Fetching station trains...")
-      );
-
-
-      try {
-
-        const result =
-          await callAPI({
-            action:"station",
-            station,
-            hours
-          });
-
-
-        renderStation(
-          box,
-          result?.data || result,
-          station
-        );
-
-
-      } catch(err) {
-
-        show(
-          box,
-          error(err.message)
-        );
-
-      }
-
-    }
-  );
-
-
-  function renderStation(box,d,station) {
-
-    const trains =
-      Array.isArray(d?.trains)
-        ? d.trains
-        : [];
-
-
-    show(
-      box,
-      `
-        <div class="data-box">
-
-          <h3>
-            🚉 ${esc(station)} Live Station
-          </h3>
-
-          <p>
-            <b>
-              ${trains.length}
-            </b>
-            trains found
-          </p>
-
-
-          ${
-            trains.length
-              ? `
-                <div class="train-list">
-
-                  ${trains.map(t => `
-
-                    <div class="train-item">
-
-                      <strong>
-                        🚆
-                        ${esc(
-                          value(
-                            t,
-                            "trainNo",
-                            "trainNumber"
-                          )
-                        )}
-                        —
-                        ${esc(
-                          value(
-                            t,
-                            "trainName",
-                            "name"
-                          )
-                        )}
-                      </strong>
-
-
-                      <p>
-                        ${esc(
-                          value(
-                            t,
-                            "sourceName",
-                            "source"
-                          )
-                        )}
-                        →
-                        ${esc(
-                          value(
-                            t,
-                            "destName",
-                            "destination"
-                          )
-                        )}
-                      </p>
-
-
-                      <p>
-                        🕐 Arrival:
-                        ${esc(
-                          value(
-                            t?.arrival || {},
-                            "actual",
-                            "scheduled",
-                            "time"
-                          )
-                        )}
-                      </p>
-
 
                       <p>
                         🚉 Platform:
                         ${esc(
-                          value(
-                            t,
-                            "platform",
-                            "platformNumber"
-                          )
-                        )}
-                      </p>
-
-
-                      <p>
-                        ⏱️ Delay:
-                        ${esc(
-                          value(
-                            t?.arrival || {},
-                            "delay",
-                            "delayMinutes"
+                          pick(
+                            s,
+                            [
+                              "platform",
+                              "platform_number"
+                            ]
                           )
                         )}
                       </p>
@@ -1219,7 +806,7 @@ document.addEventListener("DOMContentLoaded", () => {
               `
               : `
                 <p>
-                  Train details available nahi hain.
+                  Live station-wise details API ne nahi diye.
                 </p>
               `
           }
@@ -1227,9 +814,458 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
       `
     );
-
   }
 
+  /* =========================
+     TRAIN SEARCH
+  ========================= */
+
+  $("searchForm")?.addEventListener(
+    "submit",
+    async e => {
+
+      e.preventDefault();
+
+      const from =
+        stationCode("fromStation");
+
+      const to =
+        stationCode("toStation");
+
+      const date =
+        $("searchDate").value;
+
+      const box =
+        $("searchResult");
+
+      if (!from || !to) {
+        show(
+          box,
+          errorBox(
+            "From aur To station select karo."
+          )
+        );
+        return;
+      }
+
+      if (from === to) {
+        show(
+          box,
+          errorBox(
+            "From aur To station same nahi ho sakte."
+          )
+        );
+        return;
+      }
+
+      show(
+        box,
+        loading("Trains search ho rahi hain...")
+      );
+
+      try {
+
+        const result = await callAPI({
+          action: "search",
+          from,
+          to,
+          date: dateForAPI(date)
+        });
+
+        renderSearch(
+          box,
+          result
+        );
+
+      } catch (err) {
+
+        show(
+          box,
+          errorBox(err.message)
+        );
+
+      }
+    }
+  );
+
+  function renderSearch(box, result) {
+
+    /*
+      IMPORTANT:
+      New railway.js returns:
+      result.display
+    */
+
+    let trains =
+      Array.isArray(result?.display)
+        ? result.display
+        : Array.isArray(result?.data)
+        ? result.data
+        : Array.isArray(result)
+        ? result
+        : [];
+
+    if (!trains.length) {
+
+      show(
+        box,
+        `
+          <div class="data-box">
+            <h3>🔎 Train Search</h3>
+            <p>
+              Is route par train data available nahi hai.
+            </p>
+          </div>
+        `
+      );
+
+      return;
+    }
+
+    show(
+      box,
+      `
+        <div class="data-box">
+
+          <h3>
+            🚆 ${trains.length} Trains Found
+          </h3>
+
+          <div class="train-list">
+
+            ${trains.map(t => {
+
+              const no =
+                pick(
+                  t,
+                  [
+                    "trainNo",
+                    "train_no",
+                    "trainNumber",
+                    "number"
+                  ]
+                );
+
+              const name =
+                pick(
+                  t,
+                  [
+                    "trainName",
+                    "train_name",
+                    "name"
+                  ]
+                );
+
+              const fromName =
+                pick(
+                  t,
+                  [
+                    "from",
+                    "from_stn_name",
+                    "source"
+                  ]
+                );
+
+              const toName =
+                pick(
+                  t,
+                  [
+                    "to",
+                    "to_stn_name",
+                    "destination"
+                  ]
+                );
+
+              const departure =
+                pick(
+                  t,
+                  [
+                    "departure",
+                    "from_time",
+                    "departureTime"
+                  ]
+                );
+
+              const arrival =
+                pick(
+                  t,
+                  [
+                    "arrival",
+                    "to_time",
+                    "arrivalTime"
+                  ]
+                );
+
+              const duration =
+                pick(
+                  t,
+                  [
+                    "travelTime",
+                    "travel_time",
+                    "duration"
+                  ]
+                );
+
+              const days =
+                pick(
+                  t,
+                  [
+                    "runningDays",
+                    "running_days"
+                  ]
+                );
+
+              return `
+                <div class="train-item">
+
+                  <strong>
+                    🚆 ${esc(no)} —
+                    ${esc(name)}
+                  </strong>
+
+                  <p>
+                    📍 ${esc(fromName)}
+                    →
+                    ${esc(toName)}
+                  </p>
+
+                  <p>
+                    🟢 Departure:
+                    <b>${esc(departure)}</b>
+                  </p>
+
+                  <p>
+                    🔴 Arrival:
+                    <b>${esc(arrival)}</b>
+                  </p>
+
+                  <p>
+                    ⏱️ Journey:
+                    ${esc(duration)}
+                  </p>
+
+                  <p>
+                    📅 Running:
+                    ${esc(days)}
+                  </p>
+
+                </div>
+              `;
+
+            }).join("")}
+
+          </div>
+
+        </div>
+      `
+    );
+  }
+
+  /* =========================
+     LIVE STATION
+  ========================= */
+
+  $("stationForm")?.addEventListener(
+    "submit",
+    async e => {
+
+      e.preventDefault();
+
+      const station =
+        stationCode("stationCode");
+
+      const hours =
+        $("stationHours").value;
+
+      const box =
+        $("stationResult");
+
+      if (!station) {
+        show(
+          box,
+          errorBox(
+            "Station select karo."
+          )
+        );
+        return;
+      }
+
+      show(
+        box,
+        loading("Station ka live data fetch ho raha hai...")
+      );
+
+      try {
+
+        const result = await callAPI({
+          action: "station",
+          station,
+          hours
+        });
+
+        renderStation(
+          box,
+          result
+        );
+
+      } catch (err) {
+
+        show(
+          box,
+          errorBox(err.message)
+        );
+
+      }
+    }
+  );
+
+  function renderStation(box, result) {
+
+    const d =
+      result?.data ||
+      result;
+
+    const trains =
+      Array.isArray(result?.display)
+        ? result.display
+        : Array.isArray(d?.trains)
+        ? d.trains
+        : [];
+
+    if (!trains.length) {
+
+      show(
+        box,
+        `
+          <div class="data-box">
+            <h3>🚉 Live Station</h3>
+            <p>
+              Is time ke liye train data available nahi hai.
+            </p>
+          </div>
+        `
+      );
+
+      return;
+    }
+
+    show(
+      box,
+      `
+        <div class="data-box">
+
+          <h3>🚉 Live Station</h3>
+
+          <p>
+            <b>${trains.length}</b>
+            trains found
+          </p>
+
+          <div class="train-list">
+
+            ${trains.map(t => `
+
+              <div class="train-item">
+
+                <strong>
+                  🚆 ${esc(
+                    pick(
+                      t,
+                      [
+                        "trainNo",
+                        "train_no",
+                        "trainNumber"
+                      ]
+                    )
+                  )}
+                  —
+                  ${esc(
+                    pick(
+                      t,
+                      [
+                        "trainName",
+                        "train_name",
+                        "name"
+                      ]
+                    )
+                  )}
+                </strong>
+
+                <p>
+                  📍 ${esc(
+                    pick(
+                      t,
+                      [
+                        "from",
+                        "sourceName",
+                        "source"
+                      ]
+                    )
+                  )}
+                  →
+                  ${esc(
+                    pick(
+                      t,
+                      [
+                        "to",
+                        "destName",
+                        "destination"
+                      ]
+                    )
+                  )}
+                </p>
+
+                <p>
+                  🟢 Arrival:
+                  ${esc(
+                    pick(
+                      t,
+                      [
+                        "arrival",
+                        "arrivalTime",
+                        "scheduledArrival"
+                      ]
+                    )
+                  )}
+                </p>
+
+                <p>
+                  🚉 Platform:
+                  ${esc(
+                    pick(
+                      t,
+                      [
+                        "platform",
+                        "platformNumber"
+                      ]
+                    )
+                  )}
+                </p>
+
+                <p>
+                  ⏱️ Delay:
+                  ${esc(
+                    pick(
+                      t,
+                      [
+                        "delay",
+                        "delayMinutes"
+                      ],
+                      "0"
+                    )
+                  )} min
+                </p>
+
+              </div>
+
+            `).join("")}
+
+          </div>
+
+        </div>
+      `
+    );
+  }
 
   /* =========================
      SEAT AVAILABILITY
@@ -1245,10 +1281,10 @@ document.addEventListener("DOMContentLoaded", () => {
         $("seatTrain").value.trim();
 
       const from =
-        getStationCode("seatFrom");
+        stationCode("seatFrom");
 
       const to =
-        getStationCode("seatTo");
+        stationCode("seatTo");
 
       const date =
         $("seatDate").value;
@@ -1262,7 +1298,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const box =
         $("seatResult");
 
-
       if (
         !/^\d{5}$/.test(trainNo) ||
         !from ||
@@ -1272,64 +1307,62 @@ document.addEventListener("DOMContentLoaded", () => {
 
         show(
           box,
-          error(
-            "Train, From, To aur Date required hai."
+          errorBox(
+            "Train, From, To aur Date complete karo."
           )
         );
 
         return;
-
       }
-
 
       show(
         box,
-        loading("Checking seat availability...")
+        loading("Seat availability check ho rahi hai...")
       );
-
 
       try {
 
-        const result =
-          await callAPI({
-            action:"seats",
-            trainNo,
-            from,
-            to,
-            date,
-            coach,
-            quota
-          });
-
+        const result = await callAPI({
+          action: "seats",
+          trainNo,
+          from,
+          to,
+          date: dateForAPI(date),
+          coach,
+          quota
+        });
 
         renderSeats(
           box,
-          result?.data || result
+          result
         );
 
-
-      } catch(err) {
+      } catch (err) {
 
         show(
           box,
-          error(err.message)
+          errorBox(err.message)
         );
 
       }
-
     }
   );
 
+  function renderSeats(box, result) {
 
-  function renderSeats(box,d) {
+    const d =
+      result?.display ||
+      result?.data ||
+      result;
 
-    const list =
+    const availability =
       Array.isArray(d?.availability)
         ? d.availability
-        : Array.isArray(d)
-        ? d
+        : Array.isArray(
+            result?.data?.availability
+          )
+        ? result.data.availability
         : [];
-
 
     show(
       box,
@@ -1341,56 +1374,74 @@ document.addEventListener("DOMContentLoaded", () => {
           <p>
             <b>Train:</b>
             ${esc(
-              value(
+              pick(
                 d,
-                "trainName",
-                "train"
+                [
+                  "trainName",
+                  "train_name"
+                ]
               )
             )}
           </p>
 
+          <p>
+            <b>Route:</b>
+            ${esc(
+              pick(
+                d,
+                ["from"]
+              )
+            )}
+            →
+            ${esc(
+              pick(
+                d,
+                ["to"]
+              )
+            )}
+          </p>
 
           ${
-            list.length
+            availability.length
               ? `
                 <div class="availability-list">
 
-                  ${list.map(a => `
+                  ${availability.map(a => `
 
                     <div class="availability-item">
 
                       <strong>
                         ${esc(
-                          value(
+                          pick(
                             a,
-                            "date",
-                            "journeyDate"
+                            [
+                              "date",
+                              "journeyDate"
+                            ]
                           )
                         )}
                       </strong>
 
                       <span>
                         ${esc(
-                          value(
+                          pick(
                             a,
-                            "status",
-                            "availability"
+                            [
+                              "status",
+                              "availability",
+                              "prediction"
+                            ]
                           )
                         )}
                       </span>
 
                       <small>
-                        ${
-                          value(a,"fare") !== "-"
-                            ? "₹" +
-                              esc(
-                                value(
-                                  a,
-                                  "fare"
-                                )
-                              )
-                            : ""
-                        }
+                        ${esc(
+                          pick(
+                            a,
+                            ["fare"]
+                          )
+                        )}
                       </small>
 
                     </div>
@@ -1401,24 +1452,48 @@ document.addEventListener("DOMContentLoaded", () => {
               `
               : `
                 <p>
-                  <b>Availability:</b>
-                  ${esc(
-                    value(
-                      d,
-                      "availability",
-                      "status"
-                    )
-                  )}
+                  💺 Availability:
+                  <b>
+                    ${esc(
+                      pick(
+                        d,
+                        [
+                          "availability",
+                          "status"
+                        ]
+                      )
+                    )}
+                  </b>
                 </p>
               `
           }
 
+          <hr>
+
+          <p>
+            Base Fare:
+            ₹${esc(
+              pick(
+                d,
+                ["baseFare"]
+              )
+            )}
+          </p>
+
+          <p>
+            Total Fare:
+            ₹${esc(
+              pick(
+                d,
+                ["totalFare"]
+              )
+            )}
+          </p>
+
         </div>
       `
     );
-
   }
-
 
   /* =========================
      FARE
@@ -1434,10 +1509,10 @@ document.addEventListener("DOMContentLoaded", () => {
         $("fareTrain").value.trim();
 
       const from =
-        getStationCode("fareFrom");
+        stationCode("fareFrom");
 
       const to =
-        getStationCode("fareTo");
+        stationCode("fareTo");
 
       const date =
         $("fareDate").value;
@@ -1451,7 +1526,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const box =
         $("fareResult");
 
-
       if (
         !/^\d{5}$/.test(trainNo) ||
         !from ||
@@ -1461,65 +1535,52 @@ document.addEventListener("DOMContentLoaded", () => {
 
         show(
           box,
-          error(
-            "Train, From, To aur Date required hai."
+          errorBox(
+            "Train, From, To aur Date complete karo."
           )
         );
 
         return;
-
       }
-
 
       show(
         box,
-        loading("Checking fare...")
+        loading("Fare calculate ho raha hai...")
       );
-
 
       try {
 
-        const result =
-          await callAPI({
-            action:"fare",
-            trainNo,
-            from,
-            to,
-            date,
-            travelClass,
-            quota
-          });
-
+        const result = await callAPI({
+          action: "fare",
+          trainNo,
+          from,
+          to,
+          date: dateForAPI(date),
+          travelClass,
+          quota
+        });
 
         renderFare(
           box,
-          result?.data || result
+          result
         );
 
-
-      } catch(err) {
+      } catch (err) {
 
         show(
           box,
-          error(err.message)
+          errorBox(err.message)
         );
 
       }
-
     }
   );
 
+  function renderFare(box, result) {
 
-  function renderFare(box,d) {
-
-    const total =
-      value(
-        d,
-        "totalFare",
-        "total",
-        "fare"
-      );
-
+    const d =
+      result?.data ||
+      result;
 
     show(
       box,
@@ -1529,12 +1590,27 @@ document.addEventListener("DOMContentLoaded", () => {
           <h3>💰 Fare Details</h3>
 
           <p>
+            <b>Train:</b>
+            ${esc(
+              pick(
+                d,
+                [
+                  "trainName",
+                  "train_name"
+                ]
+              )
+            )}
+          </p>
+
+          <p>
             <b>Base Fare:</b>
             ₹${esc(
-              value(
+              pick(
                 d,
-                "baseFare",
-                "base"
+                [
+                  "baseFare",
+                  "base_fare"
+                ]
               )
             )}
           </p>
@@ -1542,10 +1618,12 @@ document.addEventListener("DOMContentLoaded", () => {
           <p>
             <b>Reservation:</b>
             ₹${esc(
-              value(
+              pick(
                 d,
-                "reservation",
-                "reservationCharge"
+                [
+                  "reservation",
+                  "reservationCharge"
+                ]
               )
             )}
           </p>
@@ -1553,10 +1631,12 @@ document.addEventListener("DOMContentLoaded", () => {
           <p>
             <b>Superfast:</b>
             ₹${esc(
-              value(
+              pick(
                 d,
-                "superfast",
-                "superfastCharge"
+                [
+                  "superfast",
+                  "superfastCharge"
+                ]
               )
             )}
           </p>
@@ -1564,10 +1644,12 @@ document.addEventListener("DOMContentLoaded", () => {
           <p>
             <b>GST:</b>
             ₹${esc(
-              value(
+              pick(
                 d,
-                "gst",
-                "gstAmount"
+                [
+                  "gst",
+                  "gstAmount"
+                ]
               )
             )}
           </p>
@@ -1575,16 +1657,23 @@ document.addEventListener("DOMContentLoaded", () => {
           <hr>
 
           <h2>
-            Total Fare:
-            ₹${esc(total)}
+            Total:
+            ₹${esc(
+              pick(
+                d,
+                [
+                  "totalFare",
+                  "total",
+                  "fare"
+                ]
+              )
+            )}
           </h2>
 
         </div>
       `
     );
-
   }
-
 
   /* =========================
      TRAIN INFORMATION
@@ -1602,53 +1691,172 @@ document.addEventListener("DOMContentLoaded", () => {
       const box =
         $("trainResult");
 
-
       if (!/^\d{5}$/.test(trainNo)) {
 
         show(
           box,
-          error("Enter valid 5 digit train number.")
+          errorBox(
+            "5 digit train number enter karo."
+          )
         );
 
         return;
-
       }
-
 
       show(
         box,
-        loading("Fetching train information...")
+        loading("Train information fetch ho rahi hai...")
       );
-
 
       try {
 
-        const result =
-          await callAPI({
-            action:"train",
-            trainNo
-          });
+        const result = await callAPI({
+          action: "train",
+          trainNo
+        });
 
-
-        renderGeneric(
+        renderTrainInfo(
           box,
-          result?.data || result,
-          "🗺️ Train Information"
+          result
         );
 
-
-      } catch(err) {
+      } catch (err) {
 
         show(
           box,
-          error(err.message)
+          errorBox(err.message)
         );
 
       }
-
     }
   );
 
+  function renderTrainInfo(box, result) {
+
+    const d =
+      result?.display ||
+      result?.data?.trainInfo ||
+      result?.data ||
+      result;
+
+    show(
+      box,
+      `
+        <div class="data-box">
+
+          <h3>🗺️ Train Information</h3>
+
+          <p>
+            <b>Train Number:</b>
+            ${esc(
+              pick(
+                d,
+                [
+                  "trainNo",
+                  "train_no",
+                  "trainNumber"
+                ]
+              )
+            )}
+          </p>
+
+          <p>
+            <b>Train Name:</b>
+            ${esc(
+              pick(
+                d,
+                [
+                  "trainName",
+                  "train_name",
+                  "name"
+                ]
+              )
+            )}
+          </p>
+
+          <p>
+            <b>From:</b>
+            ${esc(
+              pick(
+                d,
+                [
+                  "from",
+                  "from_stn_name"
+                ]
+              )
+            )}
+          </p>
+
+          <p>
+            <b>To:</b>
+            ${esc(
+              pick(
+                d,
+                [
+                  "to",
+                  "to_stn_name"
+                ]
+              )
+            )}
+          </p>
+
+          <p>
+            <b>Departure:</b>
+            ${esc(
+              pick(
+                d,
+                [
+                  "departure",
+                  "from_time"
+                ]
+              )
+            )}
+          </p>
+
+          <p>
+            <b>Arrival:</b>
+            ${esc(
+              pick(
+                d,
+                [
+                  "arrival",
+                  "to_time"
+                ]
+              )
+            )}
+          </p>
+
+          <p>
+            <b>Journey Time:</b>
+            ${esc(
+              pick(
+                d,
+                [
+                  "travelTime",
+                  "travel_time",
+                  "duration"
+                ]
+              )
+            )}
+          </p>
+
+          <p>
+            <b>Running Days:</b>
+            ${esc(
+              pick(
+                d,
+                [
+                  "runningDays",
+                  "running_days"
+                ]
+              )
+            )}
+          </p>
+
+        </div>
+      `
+    );
+  }
 
   /* =========================
      HISTORY
@@ -1669,7 +1877,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const box =
         $("historyResult");
 
-
       if (
         !/^\d{5}$/.test(trainNo) ||
         !date
@@ -1677,206 +1884,158 @@ document.addEventListener("DOMContentLoaded", () => {
 
         show(
           box,
-          error(
+          errorBox(
             "Train number aur date required hai."
           )
         );
 
         return;
-
       }
-
 
       show(
         box,
-        loading("Fetching train history...")
+        loading("Train history fetch ho rahi hai...")
       );
-
 
       try {
 
-        const result =
-          await callAPI({
-            action:"history",
-            trainNo,
-            date
-          });
+        const result = await callAPI({
+          action: "history",
+          trainNo,
+          date: dateForAPI(date)
+        });
 
-
-        renderGeneric(
+        renderHistory(
           box,
-          result?.data || result,
-          "📜 Train History"
+          result
         );
 
-
-      } catch(err) {
+      } catch (err) {
 
         show(
           box,
-          error(err.message)
+          errorBox(err.message)
         );
 
       }
-
     }
   );
 
+  function renderHistory(box, result) {
 
-  /* =========================
-     GENERIC RESULT
-  ========================= */
+    const d =
+      result?.data ||
+      result;
 
-  function renderGeneric(box,d,title) {
+    const list =
+      Array.isArray(d)
+        ? d
+        : Array.isArray(d?.records)
+        ? d.records
+        : Array.isArray(d?.history)
+        ? d.history
+        : [];
 
-    if (!d) {
+    if (!list.length) {
 
       show(
         box,
         `
           <div class="data-box">
-            <h3>${esc(title)}</h3>
-            <p>No data available.</p>
+            <h3>📜 Train History</h3>
+            <p>
+              ${esc(
+                pick(
+                  d,
+                  [
+                    "message",
+                    "status"
+                  ],
+                  "History data available nahi hai."
+                )
+              )}
+            </p>
           </div>
         `
       );
 
       return;
-
     }
-
-
-    let html = "";
-
-
-    if (Array.isArray(d)) {
-
-      html = d.slice(0,30).map(item => {
-
-        if (typeof item === "object") {
-
-          return `
-            <div class="train-item">
-              ${objectHTML(item)}
-            </div>
-          `;
-
-        }
-
-        return `
-          <p>• ${esc(item)}</p>
-        `;
-
-      }).join("");
-
-    }
-
-
-    else if (typeof d === "object") {
-
-      html =
-        Object.entries(d)
-          .slice(0,40)
-          .map(([key,val]) => {
-
-            if (
-              val &&
-              typeof val === "object"
-            ) {
-
-              return `
-                <div class="train-item">
-
-                  <strong>
-                    ${esc(formatKey(key))}
-                  </strong>
-
-                  ${objectHTML(val)}
-
-                </div>
-              `;
-
-            }
-
-            return `
-              <p>
-                <b>${esc(formatKey(key))}:</b>
-                ${esc(val)}
-              </p>
-            `;
-
-          }).join("");
-
-    }
-
-
-    else {
-
-      html =
-        `<p>${esc(d)}</p>`;
-
-    }
-
 
     show(
       box,
       `
         <div class="data-box">
 
-          <h3>${esc(title)}</h3>
+          <h3>📜 Train History</h3>
 
-          ${html}
+          <div class="train-list">
+
+            ${list.map(x => `
+
+              <div class="train-item">
+
+                <strong>
+                  📅 ${esc(
+                    pick(
+                      x,
+                      [
+                        "date",
+                        "journeyDate"
+                      ]
+                    )
+                  )}
+                </strong>
+
+                <p>
+                  Status:
+                  ${esc(
+                    pick(
+                      x,
+                      [
+                        "status",
+                        "message"
+                      ]
+                    )
+                  )}
+                </p>
+
+                <p>
+                  Arrival:
+                  ${esc(
+                    pick(
+                      x,
+                      [
+                        "arrival",
+                        "arrivalTime"
+                      ]
+                    )
+                  )}
+                </p>
+
+                <p>
+                  Departure:
+                  ${esc(
+                    pick(
+                      x,
+                      [
+                        "departure",
+                        "departureTime"
+                      ]
+                    )
+                  )}
+                </p>
+
+              </div>
+
+            `).join("")}
+
+          </div>
 
         </div>
       `
     );
-
   }
-
-
-  function objectHTML(obj) {
-
-    return Object.entries(obj)
-      .slice(0,20)
-      .map(([k,v]) => {
-
-        if (
-          v &&
-          typeof v === "object"
-        ) {
-
-          return `
-            <p>
-              <b>${esc(formatKey(k))}:</b>
-              ${esc(
-                JSON.stringify(v)
-              )}
-            </p>
-          `;
-
-        }
-
-        return `
-          <p>
-            <b>${esc(formatKey(k))}:</b>
-            ${esc(v)}
-          </p>
-        `;
-
-      }).join("");
-
-  }
-
-
-  function formatKey(key) {
-
-    return String(key)
-      .replace(/([A-Z])/g," $1")
-      .replace(/[_-]/g," ")
-      .replace(/^./,x => x.toUpperCase());
-
-  }
-
 
   /* =========================
      CANCELLED TRAINS
@@ -1889,39 +2048,171 @@ document.addEventListener("DOMContentLoaded", () => {
       const box =
         $("cancelledResult");
 
+      const button =
+        $("cancelledBtn");
+
+      button.disabled = true;
+      button.textContent =
+        "⏳ Loading...";
 
       show(
         box,
-        loading("Fetching cancelled trains...")
+        loading(
+          "Cancelled trains fetch ho rahi hain..."
+        )
       );
-
 
       try {
 
         const result =
           await callAPI({
-            action:"cancelled"
+            action: "cancelled"
           });
 
-
-        renderGeneric(
+        renderCancelled(
           box,
-          result?.data || result,
-          "❌ Cancelled Trains"
+          result
         );
 
-
-      } catch(err) {
+      } catch (err) {
 
         show(
           box,
-          error(err.message)
+          errorBox(err.message)
         );
 
-      }
+      } finally {
 
+        button.disabled = false;
+        button.textContent =
+          "Check Cancelled Trains";
+
+      }
     }
   );
 
+  function renderCancelled(box, result) {
+
+    const d =
+      result?.data ||
+      result;
+
+    const list =
+      Array.isArray(d)
+        ? d
+        : Array.isArray(d?.trains)
+        ? d.trains
+        : Array.isArray(d?.cancelled)
+        ? d.cancelled
+        : [];
+
+    if (!list.length) {
+
+      show(
+        box,
+        `
+          <div class="data-box">
+
+            <h3>❌ Cancelled Trains</h3>
+
+            <p>
+              Aaj ke liye cancelled train data available nahi hai.
+            </p>
+
+          </div>
+        `
+      );
+
+      return;
+    }
+
+    show(
+      box,
+      `
+        <div class="data-box">
+
+          <h3>
+            ❌ Cancelled Trains
+          </h3>
+
+          <div class="train-list">
+
+            ${list.map(t => `
+
+              <div class="train-item">
+
+                <strong>
+                  ❌ ${esc(
+                    pick(
+                      t,
+                      [
+                        "trainNo",
+                        "train_no",
+                        "trainNumber"
+                      ]
+                    )
+                  )}
+                  —
+                  ${esc(
+                    pick(
+                      t,
+                      [
+                        "trainName",
+                        "train_name",
+                        "name"
+                      ]
+                    )
+                  )}
+                </strong>
+
+                <p>
+                  📍 ${esc(
+                    pick(
+                      t,
+                      [
+                        "from",
+                        "source",
+                        "sourceName"
+                      ]
+                    )
+                  )}
+                  →
+                  ${esc(
+                    pick(
+                      t,
+                      [
+                        "to",
+                        "destination",
+                        "destName"
+                      ]
+                    )
+                  )}
+                </p>
+
+                <p>
+                  🔴 Status:
+                  ${esc(
+                    pick(
+                      t,
+                      [
+                        "status",
+                        "reason",
+                        "cancelled"
+                      ],
+                      "Cancelled"
+                    )
+                  )}
+                </p>
+
+              </div>
+
+            `).join("")}
+
+          </div>
+
+        </div>
+      `
+    );
+  }
 
 });
