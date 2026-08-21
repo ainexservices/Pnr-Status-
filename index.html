@@ -1,225 +1,263 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <meta name="theme-color" content="#1769e0">
-  <meta name="description" content="AINEX E Ticket - Check Indian Railway PNR Status quickly and easily.">
-  <title>AINEX E Ticket | Railway PNR Status</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="AINEX E Ticket - Check Indian Railway PNR status online.">
+<meta name="theme-color" content="#1769e8">
+<title>AINEX E Ticket | PNR Status</title>
+<link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
 <header class="header">
-  <div class="container nav">
+  <div class="header-inner">
 
-    <a href="#" class="brand">
-      <div class="logo">
-        <svg viewBox="0 0 48 48">
-          <rect x="7" y="5" width="34" height="34" rx="8"/>
-          <rect x="13" y="11" width="22" height="12" rx="2" fill="white"/>
-          <circle cx="16" cy="31" r="3" fill="white"/>
-          <circle cx="32" cy="31" r="3" fill="white"/>
-          <path d="M14 40h20M19 44h10"/>
-        </svg>
-      </div>
-
+    <a class="logo" href="#">
+      <div class="logo-box">🚆</div>
       <div>
         <b>AINEX</b>
         <span>E Ticket</span>
       </div>
     </a>
 
-    <nav class="links">
+    <nav>
       <a href="#pnr">PNR Status</a>
       <a href="#services">Services</a>
       <a href="#how">How It Works</a>
       <a href="#faq">FAQ</a>
     </nav>
 
+    <a href="#pnr" class="mobile-check">Check PNR</a>
+
   </div>
 </header>
 
 
+<!-- BIG BRAND -->
+
+<section class="brand-section">
+  <div class="brand-inner">
+
+    <div class="brand-icon">🚆</div>
+
+    <div>
+      <h1>AINEX <span>E Ticket</span></h1>
+      <p>Railway Services • PNR • Train Information</p>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- HERO -->
+
 <main>
 
 <section class="hero" id="pnr">
-  <div class="container">
 
-    <div class="hero-badge">
-      🚆 Indian Railway PNR Checker
-    </div>
+  <div class="badge">🚆 Indian Railway PNR Checker</div>
 
-    <h1>
-      Check Your
-      <span>PNR Status</span>
-      Online
-    </h1>
+  <h2>
+    Check Your <span>PNR Status</span>
+    <br class="desktop">
+    Online
+  </h2>
 
-    <p class="hero-text">
-      Enter your 10-digit PNR number and get the latest
-      railway ticket status quickly.
-    </p>
+  <p class="hero-description">
+    Enter your 10-digit PNR number and get the latest
+    railway ticket status quickly.
+  </p>
 
 
-    <div class="search-card">
+  <!-- SEARCH CARD -->
 
-      <div class="search-title">
-        <span class="ticket-icon">🎫</span>
-        <div>
-          <b>Check PNR Status</b>
-          <small>Enter your 10-digit PNR number</small>
-        </div>
+  <div class="search-card">
+
+    <div class="search-heading">
+
+      <div class="ticket-icon">🎫</div>
+
+      <div>
+        <h3>Check PNR Status</h3>
+        <p>Enter your 10-digit PNR number</p>
       </div>
-
-      <div class="search-row">
-
-        <div class="input-wrap">
-          <span>PNR</span>
-          <input
-            id="pnrInput"
-            type="text"
-            inputmode="numeric"
-            maxlength="10"
-            placeholder="Enter 10 digit PNR"
-            autocomplete="off"
-          >
-        </div>
-
-        <button id="checkBtn" class="check-btn">
-          🔍 Check Status
-        </button>
-
-      </div>
-
-      <div id="error" class="error"></div>
-
-      <div id="resultBox"></div>
 
     </div>
 
 
-    <div class="status-guide">
+    <label for="pnrInput">PNR Number</label>
 
-      <div class="guide cnf">
-        <strong>✓ CNF</strong>
-        <small>Confirmed</small>
-      </div>
+    <div class="input-wrap">
+      <span>PNR</span>
 
-      <div class="guide rac">
-        <strong>● RAC</strong>
-        <small>RAC Status</small>
-      </div>
+      <input
+        id="pnrInput"
+        type="tel"
+        maxlength="10"
+        inputmode="numeric"
+        autocomplete="off"
+        placeholder="Enter 10 digit PNR"
+      >
 
-      <div class="guide wl">
-        <strong>● WL</strong>
-        <small>Waiting List</small>
-      </div>
+      <button id="clearBtn" class="clear-btn" type="button">
+        ×
+      </button>
+    </div>
 
+
+    <button id="checkBtn" class="check-btn" type="button">
+      <span id="btnText">🔍 Check Status</span>
+      <span id="loader" class="loader hidden"></span>
+    </button>
+
+    <div id="errorBox" class="error-box hidden"></div>
+
+    <div class="privacy-note">
+      🔒 Your PNR is used only to fetch the current status.
     </div>
 
   </div>
+
+
+  <!-- LEGEND -->
+
+  <div class="status-legend">
+
+    <div class="legend-item">
+      <strong class="cnf">✓ CNF</strong>
+      <small>Confirmed</small>
+    </div>
+
+    <div class="legend-item">
+      <strong class="rac">● RAC</strong>
+      <small>RAC Status</small>
+    </div>
+
+    <div class="legend-item">
+      <strong class="wl">● WL</strong>
+      <small>Waiting List</small>
+    </div>
+
+  </div>
+
 </section>
 
+
+<!-- RESULT -->
+
+<section id="resultSection" class="result-section hidden">
+
+  <div id="resultBox"></div>
+
+</section>
+
+
+<!-- SERVICES -->
 
 <section class="services" id="services">
 
-  <div class="container">
+  <div class="section-title">
 
-    <div class="section-heading">
-      <span>RAILWAY SERVICES</span>
-      <h2>Everything You Need</h2>
-      <p>Useful railway services in one place.</p>
+    <span>RAILWAY SERVICES</span>
+
+    <h2>Everything You Need</h2>
+
+    <p>
+      Useful railway information services in one place.
+    </p>
+
+  </div>
+
+
+  <div class="service-grid">
+
+    <div class="service-card blue">
+      <div class="service-icon">🎫</div>
+      <div class="service-content">
+        <h3>PNR Status</h3>
+        <p>Check ticket status</p>
+      </div>
+      <b>→</b>
     </div>
 
 
-    <div class="service-grid">
-
-      <a href="#pnr" class="service-card blue">
-        <div class="service-icon">🎫</div>
-        <div>
-          <h3>PNR Status</h3>
-          <p>Check ticket status</p>
-        </div>
-        <b>→</b>
-      </a>
+    <div class="service-card purple">
+      <div class="service-icon">🚆</div>
+      <div class="service-content">
+        <h3>Train Status</h3>
+        <p>Track your train</p>
+      </div>
+      <b>→</b>
+    </div>
 
 
-      <a href="#" class="service-card purple">
-        <div class="service-icon">🚆</div>
-        <div>
-          <h3>Train Status</h3>
-          <p>Track your train</p>
-        </div>
-        <b>→</b>
-      </a>
+    <div class="service-card orange">
+      <div class="service-icon">🕐</div>
+      <div class="service-content">
+        <h3>Train Schedule</h3>
+        <p>Check train timing</p>
+      </div>
+      <b>→</b>
+    </div>
 
 
-      <a href="#" class="service-card orange">
-        <div class="service-icon">🕐</div>
-        <div>
-          <h3>Train Schedule</h3>
-          <p>Check train timing</p>
-        </div>
-        <b>→</b>
-      </a>
-
-
-      <a href="#" class="service-card green">
-        <div class="service-icon">📍</div>
-        <div>
-          <h3>Station Info</h3>
-          <p>Find station details</p>
-        </div>
-        <b>→</b>
-      </a>
-
+    <div class="service-card green">
+      <div class="service-icon">📍</div>
+      <div class="service-content">
+        <h3>Station Info</h3>
+        <p>Find station details</p>
+      </div>
+      <b>→</b>
     </div>
 
   </div>
 
 </section>
 
+
+<!-- HOW IT WORKS -->
 
 <section class="how" id="how">
 
-  <div class="container">
+  <div class="section-title">
 
-    <div class="section-heading">
-      <span>HOW IT WORKS</span>
-      <h2>Check PNR in 3 Steps</h2>
+    <span>HOW IT WORKS</span>
+
+    <h2>Check PNR in 3 Steps</h2>
+
+    <p>Simple, fast and easy.</p>
+
+  </div>
+
+
+  <div class="steps">
+
+    <div class="step">
+      <div class="step-number">01</div>
+      <div>
+        <h3>Enter PNR</h3>
+        <p>Enter your 10-digit PNR number.</p>
+      </div>
     </div>
 
 
-    <div class="steps">
-
-      <div class="step">
-        <div class="step-number blue-bg">01</div>
-        <div>
-          <h3>Enter PNR</h3>
-          <p>Enter your 10-digit PNR number.</p>
-        </div>
+    <div class="step">
+      <div class="step-number">02</div>
+      <div>
+        <h3>Check Status</h3>
+        <p>Tap the Check Status button.</p>
       </div>
+    </div>
 
 
-      <div class="step">
-        <div class="step-number purple-bg">02</div>
-        <div>
-          <h3>Check Status</h3>
-          <p>Tap the check status button.</p>
-        </div>
+    <div class="step">
+      <div class="step-number">03</div>
+      <div>
+        <h3>View Result</h3>
+        <p>See your latest ticket status.</p>
       </div>
-
-
-      <div class="step">
-        <div class="step-number green-bg">03</div>
-        <div>
-          <h3>View Details</h3>
-          <p>See your latest ticket status.</p>
-        </div>
-      </div>
-
     </div>
 
   </div>
@@ -227,46 +265,55 @@
 </section>
 
 
-<section class="features" id="faq">
+<!-- FAQ -->
 
-  <div class="container">
+<section class="faq" id="faq">
 
-    <div class="feature-box">
+  <div class="section-title">
 
-      <div class="feature-title">
-        <span>✨</span>
-        <div>
-          <h2>Why AINEX E Ticket?</h2>
-          <p>Simple railway information experience.</p>
-        </div>
-      </div>
+    <span>FAQ</span>
+
+    <h2>Frequently Asked Questions</h2>
+
+  </div>
 
 
-      <div class="feature-list">
+  <div class="faq-list">
 
-        <div>
-          <strong>⚡ Fast</strong>
-          <span>Quick PNR checking</span>
-        </div>
+    <details>
+      <summary>What is a PNR number?</summary>
+      <p>
+        PNR is a 10-digit number associated with your railway
+        reservation. It can be used to check ticket status.
+      </p>
+    </details>
 
-        <div>
-          <strong>📱 Mobile Friendly</strong>
-          <span>Works on every screen</span>
-        </div>
 
-        <div>
-          <strong>🎯 Simple</strong>
-          <span>Easy to use interface</span>
-        </div>
+    <details>
+      <summary>How can I check my PNR?</summary>
+      <p>
+        Enter your 10-digit PNR number in the search box
+        and tap Check Status.
+      </p>
+    </details>
 
-        <div>
-          <strong>🔒 Secure</strong>
-          <span>Your API key stays on server</span>
-        </div>
 
-      </div>
+    <details>
+      <summary>Will passenger status be displayed?</summary>
+      <p>
+        Passenger booking and current status information
+        returned by the railway data service will be displayed.
+      </p>
+    </details>
 
-    </div>
+
+    <details>
+      <summary>Can I check another PNR?</summary>
+      <p>
+        Yes. After viewing a result, use the Check Another PNR
+        button to perform another search.
+      </p>
+    </details>
 
   </div>
 
@@ -275,18 +322,21 @@
 </main>
 
 
-<footer class="footer">
+<!-- FOOTER -->
 
-  <div class="container footer-inner">
+<footer>
 
-    <div>
-      <b>AINEX E Ticket</b>
-      <p>Railway information made simple.</p>
-    </div>
-
-    <span>© 2026 AINEX E Ticket</span>
-
+  <div class="footer-brand">
+    🚆 <strong>AINEX E Ticket</strong>
   </div>
+
+  <p>
+    Railway PNR Status & Information
+  </p>
+
+  <small>
+    © 2026 AINEX E Ticket. All rights reserved.
+  </small>
 
 </footer>
 
