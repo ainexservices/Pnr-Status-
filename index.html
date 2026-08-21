@@ -4,10 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <meta name="theme-color" content="#176ff0">
-  <meta name="description" content="AINEX E Ticket - Check Indian Railway PNR Status Online">
+  <title>AINEX E Ticket | Railway PNR Status</title>
 
-  <title>AINEX E Ticket | PNR Status</title>
+  <meta
+    name="description"
+    content="Check Indian Railway PNR status online quickly with AINEX E Ticket."
+  >
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,55 +24,64 @@
 
 <body>
 
-  <main>
+<main>
 
-    <!-- MAIN BRANDING -->
-    <section class="main-brand">
+  <!-- MAIN BRANDING -->
 
-      <div class="main-logo">🚆</div>
+  <section class="main-brand">
 
-      <div>
-        <h1>AINEX <span>E Ticket</span></h1>
-        <p>Railway PNR & Ticket Information</p>
-      </div>
+    <div class="main-logo">
+      🚆
+    </div>
 
-    </section>
+    <div>
+      <h1>AINEX <span>E Ticket</span></h1>
+      <p>Railway Services • PNR • Train Information</p>
+    </div>
+
+  </section>
+
+
+  <!-- PNR HERO -->
+
+  <section class="hero">
+
+    <div class="tag">
+      🚆 Indian Railway PNR Checker
+    </div>
+
+    <h2>
+      Check Your <span>PNR Status</span> Online
+    </h2>
+
+    <p class="subtitle">
+      Enter your 10-digit PNR number and get the latest railway ticket status quickly.
+    </p>
 
 
     <!-- PNR CHECKER -->
-    <section class="hero">
 
-      <div class="tag">
-        🚆 Indian Railway PNR Checker
-      </div>
+    <div class="pnr-card">
 
-      <h2>
-        Check Your <span>PNR Status</span> Online
-      </h2>
+      <div class="card-title">
 
-      <p class="subtitle">
-        Enter your 10-digit PNR number and get the latest railway ticket status quickly.
-      </p>
-
-
-      <div class="pnr-card" id="pnr">
-
-        <div class="card-title">
-
-          <div class="card-icon">🎫</div>
-
-          <div>
-            <h3>Check PNR Status</h3>
-            <p>Enter your 10-digit PNR number</p>
-          </div>
-
+        <div class="card-icon">
+          🎫
         </div>
 
+        <div>
+          <h3>Check PNR Status</h3>
+          <p>Enter your 10-digit PNR number</p>
+        </div>
+
+      </div>
+
+
+      <form id="pnrForm">
 
         <label for="pnrInput">
           PNR Number
         </label>
-
 
         <div class="input-box">
 
@@ -78,7 +89,8 @@
 
           <input
             id="pnrInput"
-            type="text"
+            name="pnr"
+            type="tel"
             inputmode="numeric"
             maxlength="10"
             autocomplete="off"
@@ -88,202 +100,183 @@
         </div>
 
 
-        <button id="checkBtn" type="button">
-          🔍 Check Status
+        <button
+          id="checkBtn"
+          type="submit"
+        >
+          🔎 Check Status
         </button>
 
-
-        <!-- LOADING -->
-
-        <div id="loading" class="loading hidden">
-          <span></span>
-          Checking railway status...
-        </div>
+      </form>
 
 
-        <!-- ERROR -->
+      <!-- LOADING -->
 
-        <div id="error" class="error hidden"></div>
+      <div
+        id="loading"
+        class="loading hidden"
+      >
+        <span></span>
+        Checking your PNR...
+      </div>
 
 
-        <div class="privacy">
-          🔒 Your PNR is used only to fetch the current status.
-        </div>
+      <!-- ERROR -->
+
+      <div
+        id="error"
+        class="error hidden"
+      ></div>
+
+
+      <div class="privacy">
+        🔒 Your PNR is used only to fetch the current status.
+      </div>
+
+    </div>
+
+
+    <!-- STATUS KEY -->
+
+    <div class="status-key">
+
+      <div>
+        <b class="cnf">✓ CNF</b>
+        <small>Confirmed</small>
+      </div>
+
+      <div>
+        <b class="rac">● RAC</b>
+        <small>RAC Status</small>
+      </div>
+
+      <div>
+        <b class="wl">● WL</b>
+        <small>Waiting List</small>
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- RESULT -->
+
+  <section
+    id="result"
+    class="result hidden"
+  >
+
+    <div class="result-head">
+
+      <div>
+        <span>PNR RESULT</span>
+        <h2>
+          PNR <span id="showPnr">-</span>
+        </h2>
+      </div>
+
+      <div
+        id="overallStatus"
+        class="status-badge"
+      >
+        -
+      </div>
+
+    </div>
+
+
+    <!-- JOURNEY -->
+
+    <div class="journey">
+
+      <div class="station">
+
+        <small>FROM</small>
+
+        <strong id="fromStation">
+          -
+        </strong>
 
       </div>
 
 
-      <!-- STATUS LEGEND -->
-
-      <div class="status-key">
-
-        <div>
-          <b class="cnf">✓ CNF</b>
-          <small>Confirmed</small>
-        </div>
-
-        <div>
-          <b class="rac">● RAC</b>
-          <small>RAC Status</small>
-        </div>
-
-        <div>
-          <b class="wl">● WL</b>
-          <small>Waiting List</small>
-        </div>
-
-      </div>
-
-    </section>
-
-
-    <!-- PNR RESULT -->
-
-    <section id="result" class="result hidden">
-
-      <div class="result-head">
-
-        <div>
-          <span>PNR RESULT</span>
-          <h2>Journey Details</h2>
-        </div>
-
-        <div id="overallStatus" class="status-badge">
-          --
-        </div>
-
+      <div class="journey-line">
+        🚆
       </div>
 
 
-      <!-- ROUTE -->
+      <div class="station right">
 
-      <div class="journey">
+        <small>TO</small>
 
-        <div class="station">
-
-          <small>FROM</small>
-
-          <strong id="fromStation">
-            --
-          </strong>
-
-        </div>
-
-
-        <div class="journey-line">
-          🚆
-        </div>
-
-
-        <div class="station right">
-
-          <small>TO</small>
-
-          <strong id="toStation">
-            --
-          </strong>
-
-        </div>
+        <strong id="toStation">
+          -
+        </strong>
 
       </div>
 
-
-      <!-- BASIC DETAILS -->
-
-      <div class="info-grid">
-
-        <div class="info">
-
-          <small>PNR</small>
-
-          <strong id="showPnr">
-            --
-          </strong>
-
-        </div>
+    </div>
 
 
-        <div class="info">
+    <!-- TRAIN INFORMATION -->
 
-          <small>TRAIN</small>
+    <div class="info-grid">
 
-          <strong id="trainInfo">
-            --
-          </strong>
+      <div class="info">
+        <small>TRAIN</small>
+        <strong id="trainInfo">-</strong>
+      </div>
 
-        </div>
+      <div class="info">
+        <small>JOURNEY DATE</small>
+        <strong id="journeyDate">-</strong>
+      </div>
 
+      <div class="info">
+        <small>CLASS</small>
+        <strong id="travelClass">-</strong>
+      </div>
 
-        <div class="info">
+      <div class="info">
+        <small>QUOTA</small>
+        <strong id="quota">-</strong>
+      </div>
 
-          <small>JOURNEY DATE</small>
+      <div class="info">
+        <small>FARE</small>
+        <strong id="fare">-</strong>
+      </div>
 
-          <strong id="journeyDate">
-            --
-          </strong>
+      <div class="info">
+        <small>PNR NUMBER</small>
+        <strong id="resultPnr">-</strong>
+      </div>
 
-        </div>
-
-
-        <div class="info">
-
-          <small>CLASS</small>
-
-          <strong id="travelClass">
-            --
-          </strong>
-
-        </div>
-
-
-        <div class="info">
-
-          <small>QUOTA</small>
-
-          <strong id="quota">
-            --
-          </strong>
-
-        </div>
+    </div>
 
 
-        <div class="info">
+    <!-- PASSENGERS -->
 
-          <small>FARE</small>
+    <div class="passenger-section">
 
-          <strong id="fare">
-            --
-          </strong>
+      <div class="section-title">
 
-        </div>
+        <h3>
+          Passenger Status
+        </h3>
+
+        <span id="passengerCount">
+          0 Passengers
+        </span>
 
       </div>
 
+      <div id="passengerList"></div>
 
-      <!-- PASSENGERS -->
+    </div>
 
-      <div class="passenger-section">
-
-        <div class="section-title">
-
-          <h3>
-            👤 Passenger Details
-          </h3>
-
-          <span id="passengerCount">
-            --
-          </span>
-
-        </div>
-
-
-        <div id="passengerList"></div>
-
-      </div>
-
-    </section>
-
-  </main>
+  </section>
 
 
   <!-- FOOTER -->
@@ -291,7 +284,7 @@
   <footer>
 
     <div class="footer-logo">
-      🚆 <b>AINEX E Ticket</b>
+      🚆 <strong>AINEX E Ticket</strong>
     </div>
 
     <p>
@@ -304,8 +297,10 @@
 
   </footer>
 
+</main>
 
-  <script src="script.js"></script>
+
+<script src="script.js"></script>
 
 </body>
 </html>
